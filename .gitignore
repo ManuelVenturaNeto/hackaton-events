@@ -7,3 +7,15 @@ node_modules/
 .superpowers/
 *.pid
 *.log
+
+# OMC / Claude Code state (local only)
+.omc/
+**/.omc/
+
+# Build output
+eventnexus-frontend/dist/
+
+# Environment files with secrets
+.env
+eventnexus/.env
+eventnexus-frontend/.env

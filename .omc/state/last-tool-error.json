@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"pkill -f \\\"vite\\\" 2>/dev/null; echo \\\"vite killed\\\"\",\"description\":\"Kill Vite dev server\"}",
-  "error": "Exit code 144",
-  "timestamp": "2026-04-08T17:09:20.738Z",
-  "retry_count": 1
-}
