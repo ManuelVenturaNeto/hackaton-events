@@ -22,11 +22,16 @@ class Database:
 
     @staticmethod
     def _clean_url(url: str) -> str:
-        """Strip unsupported query params (e.g. pgbouncer=true) from DSN."""
+        """Clean DSN for psycopg2: remove pgbouncer param, ensure sslmode for Supabase."""
         from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
         parsed = urlparse(url)
-        params = {k: v for k, v in parse_qs(parsed.query).items() if k != "pgbouncer"}
-        cleaned = parsed._replace(query=urlencode({k: v[0] for k, v in params.items()}))
+        params = {k: v[0] for k, v in parse_qs(parsed.query).items() if k != "pgbouncer"}
+
+        # Add sslmode=require for Supabase pooler connections
+        if "supabase.com" in (parsed.hostname or "") and "sslmode" not in params:
+            params["sslmode"] = "require"
+
+        cleaned = parsed._replace(query=urlencode(params))
         return urlunparse(cleaned)
 
     def get_connection(self):
