@@ -1,10 +1,11 @@
-import { Search, MapPin, Sparkles } from 'lucide-react';
+import { Search, MapPin, Sparkles, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'motion/react';
 import { Event, LocationSuggestion } from '../types';
 import { AutocompleteInput } from './AutocompleteInput';
 import { countryFlag } from '../lib/flags';
+import { categoryLabels, t } from '../lib/labels';
 
 interface SearchBarProps {
   query: string;
@@ -51,12 +52,32 @@ export function SearchBar({
             placeholder="Buscar eventos, empresas ou organizadores..."
             icon={<Search className="w-5 h-5 text-brand-bright/60 shrink-0" />}
             renderSuggestion={(event, isActive) => (
-              <div className={`px-4 py-3 cursor-pointer ${isActive ? 'bg-bg-light' : 'hover:bg-bg-light'}`}>
-                <p className="font-semibold text-brand-navy text-sm">{event.name}</p>
-                <p className="text-xs text-text-body mt-0.5">
-                  {event.location.city}, {event.location.country}
-                  {event.startDate ? ` · ${format(new Date(event.startDate), "d 'de' MMM. 'de' yyyy", { locale: ptBR })}` : ''}
-                </p>
+              <div className={`px-3 py-2.5 rounded-xl cursor-pointer transition-colors duration-100 ${isActive ? 'bg-brand-bright/5' : 'hover:bg-bg-light'}`}>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-brand-bright/8 flex items-center justify-center shrink-0 mt-0.5">
+                    <Calendar className="w-3.5 h-3.5 text-brand-bright/60" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-brand-navy text-[13px] leading-snug truncate">{event.name}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-lg leading-none">{countryFlag(event.location.country)}</span>
+                      <span className="text-[11px] text-text-body/60">
+                        {event.location.city}{event.location.country ? `, ${event.location.country}` : ''}
+                      </span>
+                      {event.startDate && (
+                        <>
+                          <span className="text-text-body/20">·</span>
+                          <span className="text-[11px] text-text-body/50">
+                            {format(new Date(event.startDate), "d MMM yyyy", { locale: ptBR })}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold text-brand-bright/50 uppercase tracking-wider bg-brand-bright/5 px-1.5 py-0.5 rounded shrink-0 mt-1">
+                    {t(categoryLabels, event.category)}
+                  </span>
+                </div>
               </div>
             )}
           />
@@ -77,15 +98,21 @@ export function SearchBar({
             placeholder="Localização"
             icon={<MapPin className="w-4 h-4 text-brand-bright/60 shrink-0" />}
             renderSuggestion={(loc, isActive) => (
-              <div className={`px-4 py-3 cursor-pointer flex items-center gap-3 ${isActive ? 'bg-bg-light' : 'hover:bg-bg-light'}`}>
-                <span className="text-lg leading-none">{countryFlag(loc.country || loc.value)}</span>
+              <div className={`px-3 py-2.5 rounded-xl cursor-pointer transition-colors duration-100 flex items-center gap-3 ${isActive ? 'bg-brand-bright/5' : 'hover:bg-bg-light'}`}>
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-bg-light to-white border border-border-gray/40 flex items-center justify-center shrink-0 shadow-sm">
+                  <span className="text-xl leading-none">{countryFlag(loc.country || loc.value)}</span>
+                </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-brand-navy">{loc.value}</span>
+                  <p className="text-[13px] font-semibold text-brand-navy leading-snug truncate">{loc.value}</p>
                   {loc.filterKey === 'city' && loc.country && (
-                    <span className="text-xs text-text-body/60 ml-1.5">{loc.country}</span>
+                    <p className="text-[11px] text-text-body/50 mt-0.5">{loc.country}</p>
                   )}
                 </div>
-                <span className="text-[10px] text-text-body/50 bg-bg-light border border-border-gray/60 px-2 py-0.5 rounded-full shrink-0">
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full shrink-0 ${
+                  loc.filterKey === 'city'
+                    ? 'text-brand-bright/60 bg-brand-bright/5'
+                    : 'text-brand-navy/40 bg-brand-navy/5'
+                }`}>
                   {loc.type}
                 </span>
               </div>

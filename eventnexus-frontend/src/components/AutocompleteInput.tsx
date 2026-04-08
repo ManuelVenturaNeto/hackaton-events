@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface AutocompleteInputProps<T> {
   value: string;
@@ -32,7 +33,6 @@ export function AutocompleteInput<T>({
   const [focused, setFocused] = useState(false);
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const filtered = value.length >= minChars
     ? suggestions
@@ -44,11 +44,6 @@ export function AutocompleteInput<T>({
 
   const isOpen = focused && filtered.length > 0;
 
-  // DEBUG - remover depois
-  useEffect(() => {
-    console.log('[Autocomplete]', { value, focused, filteredLen: filtered.length, isOpen, suggestionsLen: suggestions.length, dropdownRect: !!dropdownRect });
-  });
-
   useEffect(() => {
     if (isOpen && containerRef.current) {
       setDropdownRect(containerRef.current.getBoundingClientRect());
@@ -57,10 +52,7 @@ export function AutocompleteInput<T>({
 
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setFocused(false);
         setActiveIndex(-1);
       }
@@ -96,33 +88,45 @@ export function AutocompleteInput<T>({
   const dropdown =
     isOpen && dropdownRect
       ? createPortal(
-          <ul
-            role="listbox"
-            style={{
-              position: 'fixed',
-              top: dropdownRect.bottom + 8,
-              left: dropdownRect.left,
-              width: dropdownRect.width,
-              zIndex: 9999,
-            }}
-            className="bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden"
-          >
-            {filtered.map((item, i) => (
-              <li
-                key={i}
-                id={`autocomplete-item-${i}`}
-                role="option"
-                aria-selected={i === activeIndex}
-                onMouseDown={e => {
-                  e.preventDefault();
-                  handleSelect(item);
-                }}
-                onMouseEnter={() => setActiveIndex(i)}
-              >
-                {renderSuggestion(item, i === activeIndex)}
-              </li>
-            ))}
-          </ul>,
+          <AnimatePresence>
+            <motion.ul
+              role="listbox"
+              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              style={{
+                position: 'fixed',
+                top: dropdownRect.bottom + 6,
+                left: dropdownRect.left,
+                width: Math.max(dropdownRect.width, 320),
+                zIndex: 9999,
+              }}
+              className="bg-white/98 backdrop-blur-xl border border-border-gray/40 rounded-2xl shadow-[0_12px_48px_rgba(25,42,61,0.15),0_2px_8px_rgba(25,42,61,0.06)] overflow-hidden ring-1 ring-black/[0.02]"
+            >
+              <div className="py-1.5">
+                {filtered.map((item, i) => (
+                  <motion.li
+                    key={i}
+                    id={`autocomplete-item-${i}`}
+                    role="option"
+                    aria-selected={i === activeIndex}
+                    initial={{ opacity: 0, x: -4 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      handleSelect(item);
+                    }}
+                    onMouseEnter={() => setActiveIndex(i)}
+                    className="mx-1.5"
+                  >
+                    {renderSuggestion(item, i === activeIndex)}
+                  </motion.li>
+                ))}
+              </div>
+            </motion.ul>
+          </AnimatePresence>,
           document.body
         )
       : null;
@@ -131,11 +135,10 @@ export function AutocompleteInput<T>({
     <div ref={containerRef} className={`relative flex items-center w-full ${className}`}>
       {icon && <span className="mr-3 shrink-0">{icon}</span>}
       <input
-        ref={inputRef}
         type="text"
         value={value}
         placeholder={placeholder}
-        className="w-full py-3 outline-none text-brand-navy placeholder:text-text-body/50 bg-transparent"
+        className="w-full py-3 outline-none text-brand-navy placeholder:text-text-body/40 bg-transparent text-[15px]"
         onChange={e => {
           onChange(e.target.value);
           setFocused(true);
@@ -143,7 +146,6 @@ export function AutocompleteInput<T>({
         }}
         onFocus={() => setFocused(true)}
         onBlur={() => {
-          // small delay so mousedown on list item fires first
           setTimeout(() => setFocused(false), 150);
         }}
         onKeyDown={handleKeyDown}
