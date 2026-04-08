@@ -42,7 +42,35 @@ SPA React consumindo a API do backend.
 
 ## Como Rodar
 
-### Backend
+### Tudo junto (recomendado)
+
+Sobe os 3 containers (PostgreSQL + API + Frontend) com um unico comando:
+
+```bash
+cp eventnexus/.env.example eventnexus/.env   # preencher API keys se necessario
+docker compose up --build
+```
+
+| Servico | URL | Descricao |
+|---------|-----|-----------|
+| Frontend | http://localhost:3000 | Interface web (nginx) |
+| API | http://localhost:8000 | FastAPI (docs em /docs) |
+| PostgreSQL | localhost:5432 | Banco de dados |
+
+O frontend faz proxy automatico de `/api/*` para o backend via nginx. Apos subir, popular o banco:
+
+```bash
+curl -X POST http://localhost:8000/api/events/sync
+```
+
+Para parar:
+
+```bash
+docker compose down           # para containers
+docker compose down -v        # para containers e apaga o volume do banco
+```
+
+### Backend (isolado)
 
 **Opcao 1 — Docker Compose (recomendado):**
 
