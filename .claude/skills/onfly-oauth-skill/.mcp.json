@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "onfly": {
-      "command": "node",
-      "args": ["/Users/lucasborges/Downloads/onfly-oauth-skill/mcp-server.js"]
-    }
-  }
-}
