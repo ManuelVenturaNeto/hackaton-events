@@ -1,8 +1,6 @@
-"""Sympla web scraper source adapter — Playwright.
+"""Sympla web scraper — Playwright + BeautifulSoup.
 
-Sympla is a React SPA that requires JavaScript rendering.
-Uses Playwright to load pages and extract event data from the rendered DOM.
-
+Sympla is a React SPA. Playwright renders JS, BeautifulSoup parses the HTML.
 Deep search: all 27 Brazilian states x 5 categories.
 """
 
@@ -10,7 +8,8 @@ import logging
 import re
 from typing import Optional
 
-from app.config import settings
+from bs4 import BeautifulSoup
+
 from app.models.event import (
     EventCategory,
     EventCreate,
@@ -19,7 +18,7 @@ from app.models.event import (
     LocationModel,
 )
 from app.sources.base_source import BaseEventSource
-from app.sources.browser_pool import new_page
+from app.sources.browser_pool import scrape_page
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ SYMPLA_URLS = _build_sympla_urls()
 
 
 class SymplaScraperSource(BaseEventSource):
-    """Scrapes Sympla event listings using Playwright for JS rendering."""
+    """Scrapes Sympla via Playwright (JS render) + BeautifulSoup (parse)."""
 
     @property
     def name(self) -> str:
@@ -74,7 +73,8 @@ class SymplaScraperSource(BaseEventSource):
 
         for source in SYMPLA_URLS:
             try:
-                events = self._scrape_page(source)
+                html = scrape_page(source["url"])
+                events = self._parse_html(html, source)
                 if events:
                     all_events.extend(events)
                     logger.info("Sympla %s: %d events", source["name"], len(events))
@@ -84,49 +84,42 @@ class SymplaScraperSource(BaseEventSource):
         logger.info("Sympla: fetched %d events from %d URLs", len(all_events), len(SYMPLA_URLS))
         return all_events
 
-    def _scrape_page(self, source: dict) -> list[EventCreate]:
-        page = new_page()
-        events: list[EventCreate] = []
-        try:
-            page.goto(source["url"], timeout=30000, wait_until="networkidle")
-            page.wait_for_timeout(3000)
+    def _parse_html(self, html: str, source: dict) -> list[EventCreate]:
+        soup = BeautifulSoup(html, "lxml")
+        events = []
 
-            cards = page.query_selector_all(
-                "[class*='event-card'], [class*='EventCard'], "
-                "[class*='event-item'], a[href*='/evento/'], "
-                "[class*='sympla-card'], [data-testid*='event']"
-            )
+        cards = soup.select(
+            "[class*='event-card'], [class*='EventCard'], "
+            "[class*='event-item'], a[href*='/evento/'], "
+            "[class*='sympla-card'], [data-testid*='event']"
+        )
 
-            for card in cards[:50]:
-                event = self._parse_card(card, source)
-                if event:
-                    events.append(event)
-        except Exception as exc:
-            logger.debug("Sympla page scrape failed for %s: %s", source["url"], exc)
-        finally:
-            page.context.close()
+        for card in cards[:50]:
+            event = self._parse_card(card, source)
+            if event:
+                events.append(event)
 
         return events
 
     def _parse_card(self, card, source: dict) -> Optional[EventCreate]:
         try:
-            name_el = card.query_selector("h3, h2, h4, [class*='title'], [class*='name']")
-            name = name_el.inner_text().strip() if name_el else ""
+            name_el = card.select_one("h3, h2, h4, [class*='title'], [class*='name']")
+            name = name_el.get_text(strip=True) if name_el else ""
             if not name or len(name) < 3:
                 return None
 
-            date_el = card.query_selector("[class*='date'], time, [class*='when']")
-            date_text = date_el.inner_text().strip() if date_el else ""
+            date_el = card.select_one("[class*='date'], time, [class*='when']")
+            date_text = date_el.get_text(strip=True) if date_el else ""
             start_date, end_date = self._parse_dates(date_text)
 
-            loc_el = card.query_selector("[class*='location'], [class*='venue'], [class*='where']")
-            location_text = loc_el.inner_text().strip() if loc_el else ""
+            loc_el = card.select_one("[class*='location'], [class*='venue'], [class*='where']")
+            location_text = loc_el.get_text(strip=True) if loc_el else ""
             city = location_text.split(",")[0].strip() if location_text else ""
 
-            link = card.get_attribute("href") or ""
+            link = card.get("href", "")
             if not link:
-                a = card.query_selector("a[href]")
-                link = a.get_attribute("href") if a else ""
+                a = card.select_one("a[href]")
+                link = a.get("href", "") if a else ""
             if link and not link.startswith("http"):
                 link = f"https://www.sympla.com.br{link}"
 
@@ -152,8 +145,7 @@ class SymplaScraperSource(BaseEventSource):
                 source_name="sympla",
                 source_confidence=0.50,
             )
-        except Exception as exc:
-            logger.debug("Failed to parse Sympla card: %s", exc)
+        except Exception:
             return None
 
     def _parse_dates(self, text: str) -> tuple[str, str]:
