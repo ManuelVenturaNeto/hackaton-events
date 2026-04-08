@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  /* Onfly Brand Palette */
+  --color-brand-primary: #2872fa;
+  --color-brand-cta: #0c93f5;
+  --color-brand-bright: #009efb;
+  --color-brand-medium: #1476bc;
+  --color-brand-dark: #1f6391;
+  --color-brand-navy: #192a3d;
+  --color-text-body: #3a4f66;
+  --color-bg-light: #f2f5f7;
+  --color-border-gray: #e1e8ed;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-light text-text-body font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-brand-navy font-semibold;
+  }
+}
+
+@layer components {
+  .btn-pill {
+    @apply rounded-[56px] px-6 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2;
+  }
+
+  .btn-primary {
+    @apply bg-brand-cta text-white hover:bg-brand-dark;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-border-gray text-brand-navy hover:bg-bg-light;
+  }
+
+  .card-glass {
+    @apply bg-white border border-border-gray rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+}
