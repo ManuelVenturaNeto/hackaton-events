@@ -36,31 +36,27 @@ CLASSIFICATION_MAP = {
 }
 
 SEARCH_KEYWORDS = [
+    "tech",
     "conference",
     "summit",
     "expo",
     "congress",
     "forum",
-    "tech",
     "business",
     "innovation",
+    "startup",
+    "digital",
+    "AI",
+    "cloud",
     "fintech",
     "healthcare",
+    "agribusiness",
 ]
 
-# Ticketmaster country codes
-COUNTRY_CODES_AMERICAS = [
-    "BR", "US", "CA", "MX", "AR", "CL", "CO", "PE",
+# Only countries with meaningful Ticketmaster coverage for business/tech
+ALL_COUNTRY_CODES = [
+    "US", "CA", "MX", "GB", "AU", "NZ", "IE",
 ]
-COUNTRY_CODES_EUROPE = [
-    "GB", "DE", "FR", "ES", "PT", "IT", "NL", "CH", "AT", "BE",
-    "SE", "NO", "DK", "FI", "IE", "PL", "CZ",
-]
-COUNTRY_CODES_ASIA_OCEANIA = [
-    "JP", "SG", "AU", "NZ", "KR", "IN", "AE",
-]
-
-ALL_COUNTRY_CODES = COUNTRY_CODES_AMERICAS + COUNTRY_CODES_EUROPE + COUNTRY_CODES_ASIA_OCEANIA
 
 MAX_PAGES = 5
 
