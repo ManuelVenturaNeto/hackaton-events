@@ -36,7 +36,7 @@ spec:
         - name: PORT
           value: '8000'
         - name: DATABASE_URL
-          value: postgresql://postgres.prvljsmnyxvvgzmvsgzz:Um%2A3z%2F%2AfhsC4nJR@aws-1-sa-east-1.pooler.supabase.com:6543/postgres
+          value: postgresql://postgres.prvljsmnyxvvgzmvsgzz:Um%252A3z%252F%252AfhsC4nJR@aws-1-sa-east-1.pooler.supabase.com:6543/postgres
         - name: TICKETMASTER_API_KEY
           value: nkwy0usBgBifF7qrLUubV61qHqhkmU2j
         - name: EVENTBRITE_API_TOKEN
