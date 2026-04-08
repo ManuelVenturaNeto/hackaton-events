@@ -38,6 +38,13 @@ def _build_search_urls() -> list[dict]:
                 "name": f"10times_{country}_{category}",
                 "region": country,
             })
+    # URLs adicionais em português para cobertura brasileira
+    for category in _CATEGORIES_10TIMES:
+        urls.append({
+            "url": f"https://10times.com/brazil/{category}?lang=pt",
+            "name": f"10times_brazil_{category}_pt",
+            "region": "brazil",
+        })
     urls.append({"url": "https://10times.com/technology/conferences", "name": "10times_global_tech", "region": "global"})
     urls.append({"url": "https://confs.tech/", "name": "confs_tech", "region": "global"})
     return urls

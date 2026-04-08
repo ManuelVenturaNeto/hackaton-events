@@ -106,6 +106,7 @@ class TicketmasterSource(BaseEventSource):
                 "apikey": settings.ticketmaster_api_key,
                 "keyword": keyword,
                 "countryCode": country_code,
+                "locale": "pt",
                 "startDateTime": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "endDateTime": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "size": 200,

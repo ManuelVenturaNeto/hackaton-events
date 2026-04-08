@@ -123,6 +123,12 @@ class SymplaScraperSource(BaseEventSource):
             if link and not link.startswith("http"):
                 link = f"https://www.sympla.com.br{link}"
 
+            desc_el = card.select_one(
+                "p, [class*='desc'], [class*='summary'], "
+                "[class*='subtitle'], [class*='info']"
+            )
+            description = desc_el.get_text(strip=True)[:500] if desc_el else ""
+
             return EventCreate(
                 name=name,
                 organizer="Unknown",
@@ -131,7 +137,7 @@ class SymplaScraperSource(BaseEventSource):
                 status=EventStatus.UPCOMING,
                 expected_audience_size=0,
                 official_website_url=link,
-                brief_description="",
+                brief_description=description,
                 start_date=start_date,
                 end_date=end_date or start_date,
                 location=LocationModel(

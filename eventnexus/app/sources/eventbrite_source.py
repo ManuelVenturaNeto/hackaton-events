@@ -42,6 +42,15 @@ SEARCH_KEYWORDS = [
     "innovation",
 ]
 
+# Palavras-chave em português para busca no Eventbrite Brasil
+SEARCH_KEYWORDS_PT = [
+    "conferencia-tecnologia",
+    "congresso-negocios",
+    "feira-tecnologia",
+    "inovacao",
+    "empreendedorismo",
+]
+
 
 class EventbriteSource(BaseEventSource):
     """Scrapes events from Eventbrite search pages via Playwright + BS4."""
@@ -54,9 +63,15 @@ class EventbriteSource(BaseEventSource):
         all_events: list[EventCreate] = []
 
         for loc_slug, country_name in LOCATIONS:
-            for keyword in SEARCH_KEYWORDS:
+            keywords = SEARCH_KEYWORDS
+            domain = "www.eventbrite.com"
+            # Para o Brasil, usar domínio .com.br e palavras-chave em português
+            if loc_slug == "brazil":
+                keywords = SEARCH_KEYWORDS_PT + SEARCH_KEYWORDS
+                domain = "www.eventbrite.com.br"
+            for keyword in keywords:
                 try:
-                    url = f"https://www.eventbrite.com/d/{loc_slug}/{keyword}/"
+                    url = f"https://{domain}/d/{loc_slug}/{keyword}/"
                     html = scrape_page(url)
                     events = self._parse_html(html, url, country_name)
                     all_events.extend(events)
