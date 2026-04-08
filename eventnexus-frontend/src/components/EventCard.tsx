@@ -2,6 +2,7 @@ import { Event } from '../types';
 import { Calendar, MapPin, Users, Building2, ExternalLink, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
+import { categoryLabels, statusLabels, t } from '../lib/labels';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -67,7 +68,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
             'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full',
             categoryColors[event.category] || 'bg-brand-navy/8 text-brand-navy'
           )}>
-            {event.category}
+            {t(categoryLabels, event.category)}
           </span>
           <ScoreRing score={event.networkingRelevanceScore} />
         </div>

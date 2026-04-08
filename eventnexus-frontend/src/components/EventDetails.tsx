@@ -3,6 +3,7 @@ import { X, Calendar, MapPin, Users, Building2, Globe, ShieldCheck, Clock, Info,
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { categoryLabels, formatLabels, statusLabels, roleLabels, t } from '../lib/labels';
 
 interface EventDetailsProps {
   event: Event | null;
@@ -74,14 +75,14 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
               <div className="relative z-10">
                 <div className="flex flex-wrap gap-2 mb-5">
                   <span className="bg-brand-bright/90 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                    {event.category}
+                    {t(categoryLabels, event.category)}
                   </span>
                   <span className="bg-white/15 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">
-                    {event.format}
+                    {t(formatLabels, event.format)}
                   </span>
                   {event.status !== 'upcoming' && (
                     <span className="bg-amber-500/90 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                      {event.status}
+                      {t(statusLabels, event.status)}
                     </span>
                   )}
                 </div>
@@ -146,7 +147,7 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
                           className="p-3 bg-bg-light rounded-xl border border-border-gray/50 hover:border-brand-bright/30 transition-colors"
                         >
                           <p className="font-bold text-brand-navy text-sm">{company.name}</p>
-                          <p className="text-[10px] uppercase text-brand-bright/80 font-bold tracking-wider">{company.role}</p>
+                          <p className="text-[10px] uppercase text-brand-bright/80 font-bold tracking-wider">{t(roleLabels, company.role)}</p>
                         </motion.div>
                       ))}
                     </div>
