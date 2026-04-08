@@ -1,6 +1,7 @@
 import { SearchFilters, EventCategory, EventFormat } from '../types';
 import { Filter } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { categoryLabels, formatLabels, t } from '../lib/labels';
 
 interface FilterSidebarProps {
   filters: SearchFilters;
@@ -16,20 +17,7 @@ const categories: EventCategory[] = [
   'Business / Entrepreneurship',
 ];
 
-const categoryLabels: Record<EventCategory, string> = {
-  'Technology': 'Tecnologia',
-  'Banking / Financial': 'Bancos / Financeiro',
-  'Agribusiness / Agriculture': 'Agronegócio',
-  'Medical / Healthcare': 'Saúde / Medicina',
-  'Business / Entrepreneurship': 'Negócios / Empreendedorismo',
-};
-
 const formats: EventFormat[] = ['in-person', 'hybrid', 'online'];
-const formatLabels: Record<EventFormat, string> = {
-  'in-person': 'Presencial',
-  'hybrid': 'Híbrido',
-  'online': 'Online',
-};
 
 const dateRangeOptions = [
   { label: 'Próximos 7 dias', value: '7' },
@@ -76,7 +64,7 @@ export function FilterSidebar({ filters, setFilters, onClose }: FilterSidebarPro
                   'text-sm transition-colors',
                   filters.category === cat ? 'text-brand-cta font-semibold' : 'text-text-body group-hover:text-brand-navy'
                 )}>
-                  {categoryLabels[cat]}
+                  {t(categoryLabels, cat)}
                 </span>
               </label>
             ))}
@@ -97,7 +85,7 @@ export function FilterSidebar({ filters, setFilters, onClose }: FilterSidebarPro
                     : 'bg-bg-light text-text-body hover:bg-border-gray'
                 )}
               >
-                {formatLabels[format]}
+                {t(formatLabels, format)}
               </button>
             ))}
           </div>
