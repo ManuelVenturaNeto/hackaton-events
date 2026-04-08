@@ -20,14 +20,33 @@ class Database:
         self.database_url = database_url
         self._conn = None
 
+    @staticmethod
+    def _clean_url(url: str) -> str:
+        """Strip unsupported query params (e.g. pgbouncer=true) from DSN."""
+        from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+        parsed = urlparse(url)
+        params = {k: v for k, v in parse_qs(parsed.query).items() if k != "pgbouncer"}
+        cleaned = parsed._replace(query=urlencode({k: v[0] for k, v in params.items()}))
+        return urlunparse(cleaned)
+
     def get_connection(self):
-        """Get or create a database connection."""
+        """Get or create a database connection. Recovers from failed transactions."""
         if self._conn is None or self._conn.closed:
             self._conn = psycopg2.connect(
-                self.database_url,
+                self._clean_url(self.database_url),
                 cursor_factory=psycopg2.extras.RealDictCursor,
             )
             self._conn.autocommit = False
+        elif self._conn.status == psycopg2.extensions.STATUS_IN_TRANSACTION:
+            # Connection is in a failed transaction — roll back and reuse
+            try:
+                self._conn.rollback()
+            except Exception:
+                self._conn = psycopg2.connect(
+                    self._clean_url(self.database_url),
+                    cursor_factory=psycopg2.extras.RealDictCursor,
+                )
+                self._conn.autocommit = False
         return self._conn
 
     def initialize(self) -> None:

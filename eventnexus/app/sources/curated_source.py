@@ -527,7 +527,7 @@ GLOBAL_EVENTS: list[dict] = [
         "expected_audience_size": 130000,
         "official_website_url": "https://www.hannovermesse.de/en/",
         "brief_description": "Hannover Messe is the world's leading industrial trade fair, covering automation, energy solutions, digital ecosystems, logistics, and Industry 4.0 innovations.",
-        "start_date": "2026-09-31",
+        "start_date": "2026-09-28",
         "end_date": "2026-10-04",
         "duration_days": 5,
         "location": LocationModel(
