@@ -1,4 +1,10 @@
-"""Eventbrite API source adapter."""
+"""Eventbrite API source adapter.
+
+Deep search strategy:
+- Iterates over countries across Americas, Europe, Asia, Oceania
+- Searches each country with multiple keyword queries
+- 365-day search window
+"""
 
 import logging
 from datetime import datetime, timedelta
@@ -19,17 +25,35 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.eventbriteapi.com/v3"
 
-SEARCH_QUERIES = [
-    {"q": "technology conference", "location.address": "Brazil"},
-    {"q": "business summit", "location.address": "Brazil"},
-    {"q": "tech expo", "location.address": "Brazil"},
-    {"q": "fintech conference", "location.address": "Brazil"},
-    {"q": "healthcare congress", "location.address": "Brazil"},
+SEARCH_KEYWORDS = [
+    "technology conference",
+    "business summit",
+    "tech expo",
+    "fintech conference",
+    "healthcare congress",
+    "innovation forum",
+    "startup event",
+    "agribusiness expo",
 ]
+
+COUNTRIES_AMERICAS = [
+    "Brazil", "United States", "Canada", "Mexico", "Argentina",
+    "Chile", "Colombia", "Peru",
+]
+COUNTRIES_EUROPE = [
+    "United Kingdom", "Germany", "France", "Spain", "Portugal",
+    "Italy", "Netherlands", "Switzerland", "Sweden", "Ireland",
+]
+COUNTRIES_ASIA_OCEANIA = [
+    "Japan", "Singapore", "Australia", "New Zealand",
+    "South Korea", "India", "United Arab Emirates",
+]
+
+ALL_COUNTRIES = COUNTRIES_AMERICAS + COUNTRIES_EUROPE + COUNTRIES_ASIA_OCEANIA
 
 
 class EventbriteSource(BaseEventSource):
-    """Fetches events from the Eventbrite API."""
+    """Fetches events from the Eventbrite API with deep search."""
 
     def __init__(self) -> None:
         self._client = httpx.Client(
@@ -48,32 +72,35 @@ class EventbriteSource(BaseEventSource):
 
         all_events: list[EventCreate] = []
         now = datetime.utcnow()
-        end = now + timedelta(days=180)
-
+        end = now + timedelta(days=settings.search_days_ahead)
         headers = {"Authorization": f"Bearer {settings.eventbrite_api_token}"}
 
-        for search in SEARCH_QUERIES:
-            try:
-                params = {
-                    **search,
-                    "start_date.range_start": now.strftime("%Y-%m-%dT%H:%M:%S"),
-                    "start_date.range_end": end.strftime("%Y-%m-%dT%H:%M:%S"),
-                    "expand": "venue,organizer",
-                }
-                response = self._client.get(
-                    f"{BASE_URL}/events/search/",
-                    params=params,
-                    headers=headers,
-                )
-                response.raise_for_status()
-                data = response.json()
+        for country in ALL_COUNTRIES:
+            for keyword in SEARCH_KEYWORDS:
+                try:
+                    params = {
+                        "q": keyword,
+                        "location.address": country,
+                        "start_date.range_start": now.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "start_date.range_end": end.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "expand": "venue,organizer",
+                    }
+                    response = self._client.get(
+                        f"{BASE_URL}/events/search/",
+                        params=params,
+                        headers=headers,
+                    )
+                    response.raise_for_status()
+                    data = response.json()
 
-                for raw in data.get("events", []):
-                    parsed = self._parse_event(raw)
-                    if parsed:
-                        all_events.append(parsed)
-            except Exception as exc:
-                logger.warning("Eventbrite search failed for %s: %s", search.get("q"), exc)
+                    for raw in data.get("events", []):
+                        parsed = self._parse_event(raw)
+                        if parsed:
+                            all_events.append(parsed)
+                except Exception as exc:
+                    logger.warning(
+                        "Eventbrite '%s' in %s failed: %s", keyword, country, exc
+                    )
 
         logger.info("Eventbrite: fetched %d events total", len(all_events))
         return all_events
