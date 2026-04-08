@@ -10,10 +10,10 @@ from app.repositories.sync_run_repository import SyncRunRepository
 from app.services.normalization_service import NormalizationService
 from app.services.scoring_service import ScoringService
 from app.sources.curated_source import CuratedEventSource
-from app.sources.eventbrite_source import EventbriteSource
-from app.sources.sympla_scraper import SymplaScraperSource
-from app.sources.ticketmaster_source import TicketmasterSource
-from app.sources.web_search_source import WebSearchSource
+# from app.sources.eventbrite_source import EventbriteSource
+# from app.sources.sympla_scraper import SymplaScraperSource
+# from app.sources.ticketmaster_source import TicketmasterSource
+# from app.sources.web_search_source import WebSearchSource
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +28,10 @@ class DiscoveryService:
         self.scorer = ScoringService()
         self.sources = [
             CuratedEventSource(),
-            TicketmasterSource(),
-            EventbriteSource(),
-            SymplaScraperSource(),
-            WebSearchSource(),
+            # TicketmasterSource(),
+            # EventbriteSource(),
+            # SymplaScraperSource(),
+            # WebSearchSource(),
         ]
 
     def sync(self) -> dict:

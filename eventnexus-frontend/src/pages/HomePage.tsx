@@ -157,8 +157,8 @@ export function HomePage() {
             className="flex justify-center gap-6 sm:gap-8 mt-8 sm:mt-10"
           >
             {[
-              { value: '1.500+', label: 'Eventos' },
-              { value: '32', label: 'Países' },
+              { value: '500+', label: 'Eventos' },
+              { value: '5', label: 'Países' },
               { value: '5', label: 'Fontes' },
             ].map((stat, i) => (
               <div key={i} className="text-center">

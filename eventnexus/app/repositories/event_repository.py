@@ -142,14 +142,26 @@ class EventRepository:
         conn.commit()
         return cur.rowcount > 0
 
-    def get_event_by_id(self, event_id: str) -> Optional[EventResponse]:
+    def _safe_read(self, fn):
+        """Execute a read operation with automatic rollback on failure."""
         conn = self.db.get_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM events WHERE id = %s", (event_id,))
-        row = cur.fetchone()
-        if not row:
-            return None
-        return self._row_to_response(cur, row)
+        try:
+            result = fn(conn)
+            conn.commit()
+            return result
+        except Exception:
+            conn.rollback()
+            raise
+
+    def get_event_by_id(self, event_id: str) -> Optional[EventResponse]:
+        def _query(conn):
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM events WHERE id = %s", (event_id,))
+            row = cur.fetchone()
+            if not row:
+                return None
+            return self._build_response(conn, row)
+        return self._safe_read(_query)
 
     def list_events(
         self,
@@ -165,96 +177,102 @@ class EventRepository:
         sort_by: str = "networkingRelevance",
         sort_order: str = "desc",
     ) -> list[EventResponse]:
-        conn = self.db.get_connection()
-        cur = conn.cursor()
+        def _query(conn):
+            cur = conn.cursor()
 
-        query = """
-            SELECT e.* FROM events e
-            LEFT JOIN event_locations l ON e.id = l.event_id
-        """
-        conditions = []
-        params: list = []
+            query = """
+                SELECT e.* FROM events e
+                LEFT JOIN event_locations l ON e.id = l.event_id
+            """
+            conditions = []
+            params: list = []
 
-        if not status:
-            conditions.append("LOWER(e.status) = 'upcoming'")
-        else:
-            conditions.append("LOWER(e.status) = LOWER(%s)")
-            params.append(status)
+            if not status:
+                conditions.append("LOWER(e.status) = 'upcoming'")
+            else:
+                conditions.append("LOWER(e.status) = LOWER(%s)")
+                params.append(status)
 
-        conditions.append("(e.end_date IS NULL OR e.end_date >= CURRENT_DATE)")
+            conditions.append("(e.end_date IS NULL OR e.end_date >= CURRENT_DATE)")
 
-        if search:
-            conditions.append(
-                "(LOWER(e.name) LIKE %s OR LOWER(e.organizer) LIKE %s OR LOWER(e.brief_description) LIKE %s)"
-            )
-            term = f"%{search.lower()}%"
-            params.extend([term, term, term])
+            if search:
+                conditions.append(
+                    "(LOWER(e.name) LIKE %s OR LOWER(e.organizer) LIKE %s OR LOWER(e.brief_description) LIKE %s)"
+                )
+                term = f"%{search.lower()}%"
+                params.extend([term, term, term])
 
-        if category:
-            conditions.append("LOWER(e.category) = LOWER(%s)")
-            params.append(category)
+            if category:
+                conditions.append("LOWER(e.category) = LOWER(%s)")
+                params.append(category)
 
-        if country:
-            conditions.append("LOWER(l.country) = LOWER(%s)")
-            params.append(country)
+            if country:
+                conditions.append("LOWER(l.country) = LOWER(%s)")
+                params.append(country)
 
-        if city:
-            conditions.append("LOWER(l.city) = LOWER(%s)")
-            params.append(city)
+            if city:
+                conditions.append("LOWER(l.city) = LOWER(%s)")
+                params.append(city)
 
-        if format_:
-            conditions.append("LOWER(e.format) = LOWER(%s)")
-            params.append(format_)
+            if format_:
+                conditions.append("LOWER(e.format) = LOWER(%s)")
+                params.append(format_)
 
-        if start_date_from:
-            conditions.append("e.start_date >= %s")
-            params.append(start_date_from)
+            if start_date_from:
+                conditions.append("e.start_date >= %s")
+                params.append(start_date_from)
 
-        if start_date_to:
-            conditions.append("e.start_date <= %s")
-            params.append(start_date_to)
+            if start_date_to:
+                conditions.append("e.start_date <= %s")
+                params.append(start_date_to)
 
-        if min_audience_size is not None:
-            conditions.append("e.expected_audience_size >= %s")
-            params.append(min_audience_size)
+            if min_audience_size is not None:
+                conditions.append("e.expected_audience_size >= %s")
+                params.append(min_audience_size)
 
-        if conditions:
-            query += " WHERE " + " AND ".join(conditions)
+            if conditions:
+                query += " WHERE " + " AND ".join(conditions)
 
-        sort_map = {
-            "networkingRelevance": "e.networking_relevance_score",
-            "startDate": "e.start_date",
-            "audienceSize": "e.expected_audience_size",
-            "lastUpdated": "e.last_updated",
-        }
-        sort_col = sort_map.get(sort_by, "e.networking_relevance_score")
-        direction = "ASC" if sort_order == "asc" else "DESC"
+            sort_map = {
+                "networkingRelevance": "e.networking_relevance_score",
+                "startDate": "e.start_date",
+                "audienceSize": "e.expected_audience_size",
+                "lastUpdated": "e.last_updated",
+            }
+            sort_col = sort_map.get(sort_by, "e.networking_relevance_score")
+            direction = "ASC" if sort_order == "asc" else "DESC"
 
-        if sort_by == "networkingRelevance":
-            query += f" ORDER BY {sort_col} {direction}, e.start_date ASC"
-        else:
-            query += f" ORDER BY {sort_col} {direction}"
+            if sort_by == "networkingRelevance":
+                query += f" ORDER BY {sort_col} {direction}, e.start_date ASC"
+            else:
+                query += f" ORDER BY {sort_col} {direction}"
 
-        query += " LIMIT 500"
+            query += " LIMIT 500"
 
-        cur.execute(query, params)
-        rows = cur.fetchall()
-        return [self._row_to_response(cur, row) for row in rows]
+            cur.execute(query, params)
+            rows = cur.fetchall()
+            return [self._build_response(conn, row) for row in rows]
+
+        return self._safe_read(_query)
 
     def get_all_event_ids_and_urls(self) -> list[dict]:
-        conn = self.db.get_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT id, name, official_website_url, status FROM events")
-        return [dict(r) for r in cur.fetchall()]
+        def _query(conn):
+            cur = conn.cursor()
+            cur.execute("SELECT id, name, official_website_url, status FROM events")
+            return [dict(r) for r in cur.fetchall()]
+        return self._safe_read(_query)
 
     def get_event_count(self) -> int:
-        conn = self.db.get_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) as cnt FROM events")
-        return cur.fetchone()["cnt"]
+        def _query(conn):
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) as cnt FROM events")
+            return cur.fetchone()["cnt"]
+        return self._safe_read(_query)
 
-    def _row_to_response(self, cur, row: dict) -> EventResponse:
+    def _build_response(self, conn, row: dict) -> EventResponse:
+        """Build EventResponse from a row. Uses the same connection for sub-queries."""
         event_id = str(row["id"])
+        cur = conn.cursor()
 
         cur.execute("SELECT * FROM event_locations WHERE event_id = %s", (event_id,))
         loc = cur.fetchone()
