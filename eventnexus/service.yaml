@@ -1,0 +1,64 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/invoker-iam-disabled: "true"
+    run.googleapis.com/launch-stage: BETA
+  name: hackaton-event
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "5"
+        autoscaling.knative.dev/minScale: "0"
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      serviceAccountName: 247888593708-compute@developer.gserviceaccount.com
+      containers:
+        - image: us-central1-docker.pkg.dev/dw-onfly-dev/hackaton-events/frontend:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            failureThreshold: 5
+            timeoutSeconds: 3
+
+        - image: us-central1-docker.pkg.dev/dw-onfly-dev/hackaton-events/fullstack:latest
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres.prvljsmnyxvvgzmvsgzz:Um*3z/*fhsC4nJR@aws-1-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+            - name: DIRECT_URL
+              value: "postgresql://postgres.prvljsmnyxvvgzmvsgzz:Um*3z/*fhsC4nJR@aws-1-sa-east-1.pooler.supabase.com:5432/postgres"
+            - name: TICKETMASTER_API_KEY
+              value: "nkwy0usBgBifF7qrLUubV61qHqhkmU2j"
+            - name: EVENTBRITE_API_TOKEN
+              value: "7EL5UEKUWJAIVHRXAT"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: CORS_ORIGINS
+              value: '["*"]'
+            - name: MAX_CONCURRENT_FETCHES
+              value: "10"
+            - name: REQUEST_TIMEOUT_SECONDS
+              value: "30"
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          startupProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 5
+            timeoutSeconds: 3

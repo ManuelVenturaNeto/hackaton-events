@@ -6,15 +6,20 @@ import subprocess
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s %(name)s %(levelname)s, %(message)s",
-    # filename="./pipeline_logs.log",
 )
 
-ADC_PATH = os.path.join(os.path.dirname(__file__), "adc.json")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(os.path.dirname(SCRIPT_DIR), "eventnexus-frontend")
+ADC_PATH = os.path.join(SCRIPT_DIR, "adc.json")
+REGISTRY = "us-central1-docker.pkg.dev/dw-onfly-dev/hackaton-events"
+BACKEND_IMAGE = f"{REGISTRY}/fullstack:latest"
+FRONTEND_IMAGE = f"{REGISTRY}/frontend:latest"
+REGION = "us-central1"
+SERVICE_YAML = os.path.join(SCRIPT_DIR, "service.yaml")
 
 
 def authenticate() -> None:
-    """Activate service account and configure Docker registry auth."""
-    logging.info("Authenticating with %s", ADC_PATH)
+    logging.info("Authenticating...")
     subprocess.run(
         ["gcloud", "auth", "activate-service-account", "--key-file", ADC_PATH],
         check=True,
@@ -25,60 +30,28 @@ def authenticate() -> None:
     )
 
 
-def run_docker_commands() -> None:
-    """
-    Build and push the Docker image to Artifact Registry.
-    """
-    image_name = "us-central1-docker.pkg.dev/dw-onfly-dev/hackaton-events/fullstack:latest"
+def build_and_push() -> None:
+    logging.info("Building backend...")
+    subprocess.run(
+        ["docker", "build", "--no-cache", "-t", BACKEND_IMAGE, "."],
+        cwd=SCRIPT_DIR, check=True,
+    )
+    logging.info("Pushing backend...")
+    subprocess.run(["docker", "push", BACKEND_IMAGE], check=True)
 
-    try:
-        # Build image without cache
-        logging.info("🔨 Building Docker image...")
-        subprocess.run(
-            ["docker", "build", "--no-cache", "-t", image_name, "."],
-            check=True,
-        )
+    logging.info("Building frontend...")
+    subprocess.run(
+        ["docker", "build", "--no-cache", "--build-arg", "VITE_API_URL=",
+         "-t", FRONTEND_IMAGE, "."],
+        cwd=FRONTEND_DIR, check=True,
+    )
+    logging.info("Pushing frontend...")
+    subprocess.run(["docker", "push", FRONTEND_IMAGE], check=True)
 
-        # Push image
-        logging.info("🚀 Pushing Docker image to Artifact Registry...")
-        subprocess.run(
-            ["docker", "push", image_name],
-            check=True,
-        )
-
-        logging.info("✅ Build and push completed successfully!")
-
-    except subprocess.CalledProcessError as error:
-        logging.info(f"❌ Error executing command: {error}")
+    logging.info("Build and push completed!")
 
 
-def deploy_cloud_run() -> None:
-    """Deploy the latest image to Cloud Run."""
-    image_name = "us-central1-docker.pkg.dev/dw-onfly-dev/hackaton-events/fullstack:latest"
-    service_name = "hackaton-event"
-    region = "us-central1"
-
-    env_vars = []
-    env_path = os.path.join(os.path.dirname(__file__), ".env")
-    if os.path.exists(env_path):
-        with open(env_path) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    env_vars.append(line)
-
-    cmd = [
-        "gcloud", "run", "deploy", service_name,
-        "--image", image_name,
-        "--region", region,
-        "--port", "8080",
-        "--allow-unauthenticated",
-    ]
-
-    if env_vars:
-        cmd += ["--set-env-vars", ",".join(env_vars)]
-
-    # Switch to user account for deploy (SA lacks iam.serviceaccounts.actAs on dev project)
+def deploy() -> None:
     logging.info("Switching to user account for deploy...")
     subprocess.run(
         ["gcloud", "config", "set", "account", "manuel.ventura@onfly.com.br"],
@@ -86,11 +59,15 @@ def deploy_cloud_run() -> None:
     )
 
     logging.info("Deploying to Cloud Run...")
-    subprocess.run(cmd, check=True)
-    logging.info("Deploy completed successfully!")
+    subprocess.run(
+        ["gcloud", "run", "services", "replace", SERVICE_YAML, "--region", REGION],
+        check=True,
+    )
+
+    logging.info("Deploy completed!")
 
 
 if __name__ == "__main__":
     authenticate()
-    run_docker_commands()
-    deploy_cloud_run()
+    build_and_push()
+    deploy()
