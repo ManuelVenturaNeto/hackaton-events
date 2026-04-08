@@ -1,85 +1,93 @@
 """Shared Playwright browser pool for web scrapers.
 
-Runs Playwright in a dedicated thread to avoid conflicts with
+Runs Playwright in a dedicated long-lived thread to avoid conflicts with
 FastAPI's asyncio event loop (Playwright sync API cannot run
 inside an asyncio loop).
 """
 
 import logging
+import queue
 import threading
-from concurrent.futures import Future
-from playwright.sync_api import sync_playwright, Browser, Page
 
 logger = logging.getLogger(__name__)
 
+_request_queue: queue.Queue = queue.Queue()
+_worker_thread: threading.Thread | None = None
 _lock = threading.Lock()
-_playwright = None
-_browser = None
 
 
-def _ensure_browser() -> Browser:
-    """Get or create the shared browser instance. Thread-safe."""
-    global _playwright, _browser
-    with _lock:
-        if _browser is None or not _browser.is_connected():
-            _playwright = sync_playwright().start()
-            _browser = _playwright.chromium.launch(
-                headless=True,
-                args=["--no-sandbox", "--disable-dev-shm-usage"],
-            )
-            logger.info("Playwright browser launched")
-        return _browser
+def _worker_loop():
+    """Long-lived worker that owns the Playwright browser."""
+    from playwright.sync_api import sync_playwright
 
+    pw = sync_playwright().start()
+    browser = pw.chromium.launch(
+        headless=True,
+        args=["--no-sandbox", "--disable-dev-shm-usage"],
+    )
+    logger.info("Playwright browser launched in worker thread")
 
-def _run_in_thread(fn):
-    """Run a function in a new thread to escape the asyncio event loop."""
-    result_future: Future = Future()
-
-    def wrapper():
+    while True:
+        item = _request_queue.get()
+        if item is None:  # shutdown signal
+            break
+        url, timeout_ms, wait_ms, result_q = item
         try:
-            result_future.set_result(fn())
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                locale="pt-BR",
+                viewport={"width": 1280, "height": 720},
+                extra_http_headers={"Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8"},
+            )
+            page = context.new_page()
+            try:
+                page.goto(url, timeout=timeout_ms, wait_until="networkidle")
+                page.wait_for_timeout(wait_ms)
+                html = page.content()
+                result_q.put(("ok", html))
+            finally:
+                page.close()
+                context.close()
         except Exception as e:
-            result_future.set_exception(e)
+            result_q.put(("error", e))
 
-    t = threading.Thread(target=wrapper, daemon=True)
-    t.start()
-    t.join(timeout=60)
-    return result_future.result(timeout=0)
+    browser.close()
+    pw.stop()
+
+
+def _ensure_worker():
+    """Start the worker thread if not already running."""
+    global _worker_thread
+    with _lock:
+        if _worker_thread is None or not _worker_thread.is_alive():
+            _worker_thread = threading.Thread(target=_worker_loop, daemon=True)
+            _worker_thread.start()
 
 
 def scrape_page(url: str, timeout_ms: int = 30000, wait_ms: int = 3000) -> str:
     """Navigate to URL and return the rendered HTML.
 
-    Runs in a separate thread to avoid asyncio conflicts.
-    Returns the full page HTML after JS rendering.
+    Sends the request to the dedicated Playwright worker thread.
     """
-    def _do_scrape() -> str:
-        browser = _ensure_browser()
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-            locale="pt-BR",
-            viewport={"width": 1280, "height": 720},
-            extra_http_headers={"Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8"},
-        )
-        page = context.new_page()
-        try:
-            page.goto(url, timeout=timeout_ms, wait_until="networkidle")
-            page.wait_for_timeout(wait_ms)
-            return page.content()
-        finally:
-            page.close()
-            context.close()
+    _ensure_worker()
+    result_q: queue.Queue = queue.Queue()
+    _request_queue.put((url, timeout_ms, wait_ms, result_q))
 
-    return _run_in_thread(_do_scrape)
+    try:
+        status, value = result_q.get(timeout=90)
+    except queue.Empty:
+        raise TimeoutError(f"Scrape timed out for {url}")
+
+    if status == "error":
+        raise value
+    return value
 
 
 def close_browser() -> None:
-    """Close the shared browser instance."""
-    global _playwright, _browser
+    """Shut down the worker thread."""
+    global _worker_thread
     with _lock:
-        if _browser:
-            _browser.close()
-            _browser = None
-        if _playwright:
-            _playwright.stop()
-            _playwright = None
+        if _worker_thread and _worker_thread.is_alive():
+            _request_queue.put(None)
+            _worker_thread.join(timeout=10)
+            _worker_thread = None

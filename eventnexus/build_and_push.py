@@ -1,6 +1,8 @@
 import logging
 import os
+import re
 import subprocess
+from urllib.parse import quote, urlparse, urlunparse
 
 
 logging.basicConfig(
@@ -16,6 +18,49 @@ BACKEND_IMAGE = f"{REGISTRY}/fullstack:latest"
 FRONTEND_IMAGE = f"{REGISTRY}/frontend:latest"
 REGION = "us-central1"
 SERVICE_YAML = os.path.join(SCRIPT_DIR, "service.yaml")
+
+
+def _url_encode_password(db_url: str) -> str:
+    """URL-encode the password in a PostgreSQL connection string.
+
+    Uses regex because urlparse chokes on special chars like / in passwords.
+    Pattern: scheme://user:password@host:port/dbname?params
+    """
+    match = re.match(
+        r'^(?P<scheme>[^:]+)://(?P<user>[^:]+):(?P<password>.+)@(?P<rest>.+)$',
+        db_url,
+    )
+    if not match:
+        return db_url
+    encoded_pw = quote(match.group("password"), safe="")
+    return f"{match.group('scheme')}://{match.group('user')}:{encoded_pw}@{match.group('rest')}"
+
+
+def _read_env() -> dict[str, str]:
+    """Read .env file and return key-value pairs with encoded DB URLs."""
+    env_path = os.path.join(SCRIPT_DIR, ".env")
+    env_vars = {}
+    if not os.path.exists(env_path):
+        return env_vars
+
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            env_vars[key] = value
+
+    # URL-encode passwords in database URLs
+    for key in ("DATABASE_URL", "DIRECT_URL"):
+        if key in env_vars:
+            env_vars[key] = _url_encode_password(env_vars[key])
+
+    return env_vars
 
 
 def authenticate() -> None:
@@ -52,6 +97,28 @@ def build_and_push() -> None:
 
 
 def deploy() -> None:
+    env_vars = _read_env()
+
+    # Build env section for the backend container in service.yaml
+    import yaml
+
+    with open(SERVICE_YAML) as f:
+        svc = yaml.safe_load(f)
+
+    containers = svc["spec"]["template"]["spec"]["containers"]
+    for container in containers:
+        if "fullstack" in container.get("image", ""):
+            container["env"] = [
+                {"name": k, "value": v} for k, v in env_vars.items()
+            ]
+            break
+
+    with open(SERVICE_YAML, "w") as f:
+        yaml.dump(svc, f, default_flow_style=False, allow_unicode=True)
+
+    logging.info("Updated service.yaml with env vars from .env")
+
+    # Switch to user account for deploy
     logging.info("Switching to user account for deploy...")
     subprocess.run(
         ["gcloud", "config", "set", "account", "manuel.ventura@onfly.com.br"],
