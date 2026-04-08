@@ -1,0 +1,7 @@
+.env
+.env.*
+adc.json
+__pycache__
+*.pyc
+venv
+.git

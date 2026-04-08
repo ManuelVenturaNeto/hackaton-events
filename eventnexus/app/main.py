@@ -19,8 +19,11 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    db.initialize()
-    logger.info("Application started. Database initialized.")
+    try:
+        db.initialize()
+        logger.info("Application started. Database initialized.")
+    except Exception as exc:
+        logger.warning("Database not available, starting without DB: %s", exc)
     yield
     db.close()
     logger.info("Application shutdown.")
