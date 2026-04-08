@@ -19,13 +19,18 @@ def _get_repo() -> EventRepository:
 
 
 def _run_sync() -> None:
-    """Background task: run full sync."""
+    """Background task: run full sync with its own DB connection."""
+    from app.database import Database
+    sync_db = Database()
     try:
-        service = DiscoveryService(db)
+        sync_db.initialize()
+        service = DiscoveryService(sync_db)
         result = service.sync()
         logger.info("Background sync completed: %s", result["message"])
     except Exception as exc:
         logger.error("Background sync failed: %s", exc)
+    finally:
+        sync_db.close()
 
 
 @router.get("", response_model=list[EventResponse])
