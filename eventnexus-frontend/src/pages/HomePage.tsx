@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Event, SearchFilters, SortOption } from '../types';
+import { useState, useEffect, useMemo } from 'react';
+import { Event, SearchFilters, SortOption, LocationSuggestion } from '../types';
 import { fetchEvents } from '../api';
 import { SearchBar } from '../components/SearchBar';
 import { EventCard } from '../components/EventCard';
@@ -15,9 +15,49 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<SearchFilters>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [locationQuery, setLocationQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('highest-score');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const eventSuggestions = useMemo(() => {
+    if (searchQuery.length < 2) return [] as Event[];
+    const q = searchQuery.toLowerCase();
+    return events.filter(e => e.name.toLowerCase().includes(q));
+  }, [events, searchQuery]);
+
+  const locationSuggestions = useMemo((): LocationSuggestion[] => {
+    const seen = new Set<string>();
+    const result: LocationSuggestion[] = [];
+    for (const event of events) {
+      const candidates: LocationSuggestion[] = [
+        { value: event.location.city, type: 'Cidade', filterKey: 'city' },
+        { value: event.location.country, type: 'País', filterKey: 'country' },
+      ];
+      for (const c of candidates) {
+        const key = `${c.type}:${c.value.toLowerCase()}`;
+        if (c.value && !seen.has(key)) {
+          seen.add(key);
+          result.push(c);
+        }
+      }
+    }
+    return result;
+  }, [events]);
+
+  function handleSelectEvent(event: Event) {
+    setSearchQuery(event.name);
+    setFilters(f => ({ ...f, search: event.name }));
+  }
+
+  function handleSelectLocation(loc: LocationSuggestion) {
+    setLocationQuery(loc.value);
+    setFilters(f => ({
+      ...f,
+      city: loc.filterKey === 'city' ? loc.value : undefined,
+      country: loc.filterKey === 'country' ? loc.value : undefined,
+    }));
+  }
 
   const loadEvents = async () => {
     setLoading(true);
@@ -52,8 +92,8 @@ export function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <header className="bg-brand-navy text-white relative overflow-hidden pt-20 pb-32 px-6">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+      <header className="bg-brand-navy text-white relative pt-20 pb-32 px-6">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none overflow-hidden">
           <div className="absolute top-10 left-10 w-64 h-64 border border-white rounded-full" />
           <div className="absolute bottom-10 right-10 w-96 h-96 border border-white rounded-full" />
         </div>
@@ -83,6 +123,12 @@ export function HomePage() {
             query={searchQuery}
             setQuery={setSearchQuery}
             onSearch={loadEvents}
+            locationQuery={locationQuery}
+            setLocationQuery={setLocationQuery}
+            eventSuggestions={eventSuggestions}
+            locationSuggestions={locationSuggestions}
+            onSelectEvent={handleSelectEvent}
+            onSelectLocation={handleSelectLocation}
           />
         </div>
       </header>
