@@ -43,39 +43,34 @@ from app.models.event import (
 
 logger = logging.getLogger(__name__)
 
-# Known event listing URLs for scraping
-SEARCH_URLS: list[dict] = [
-    {
-        "url": "https://10times.com/technology/conferences",
-        "name": "10times_tech",
-        "region": "global",
-    },
-    {
-        "url": "https://10times.com/brazil/technology",
-        "name": "10times_brazil_tech",
-        "region": "brazil",
-    },
-    {
-        "url": "https://10times.com/brazil/banking-finance",
-        "name": "10times_brazil_finance",
-        "region": "brazil",
-    },
-    {
-        "url": "https://10times.com/brazil/agriculture",
-        "name": "10times_brazil_agri",
-        "region": "brazil",
-    },
-    {
-        "url": "https://10times.com/brazil/medical-pharma",
-        "name": "10times_brazil_medical",
-        "region": "brazil",
-    },
-    {
-        "url": "https://confs.tech/",
-        "name": "confs_tech",
-        "region": "global",
-    },
-]
+# Known event listing URLs for scraping — deep search across regions
+_CATEGORIES_10TIMES = ["technology", "banking-finance", "agriculture", "medical-pharma", "business"]
+
+# Countries per region for 10times.com
+_COUNTRIES_AMERICAS = ["brazil", "united-states", "canada", "mexico", "argentina", "chile", "colombia"]
+_COUNTRIES_EUROPE = ["united-kingdom", "germany", "france", "spain", "portugal", "italy", "netherlands", "switzerland"]
+_COUNTRIES_ASIA_OCEANIA = ["japan", "singapore", "australia", "india", "south-korea", "uae"]
+
+_ALL_COUNTRIES = _COUNTRIES_AMERICAS + _COUNTRIES_EUROPE + _COUNTRIES_ASIA_OCEANIA
+
+
+def _build_search_urls() -> list[dict]:
+    urls = []
+    # 10times: per country per category
+    for country in _ALL_COUNTRIES:
+        for category in _CATEGORIES_10TIMES:
+            urls.append({
+                "url": f"https://10times.com/{country}/{category}",
+                "name": f"10times_{country}_{category}",
+                "region": country,
+            })
+    # Global aggregators
+    urls.append({"url": "https://10times.com/technology/conferences", "name": "10times_global_tech", "region": "global"})
+    urls.append({"url": "https://confs.tech/", "name": "confs_tech", "region": "global"})
+    return urls
+
+
+SEARCH_URLS: list[dict] = _build_search_urls()
 
 
 class WebSearchSource:
