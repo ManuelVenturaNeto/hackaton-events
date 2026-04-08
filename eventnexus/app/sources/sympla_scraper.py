@@ -1,7 +1,14 @@
-"""Sympla web scraper source adapter."""
+"""Sympla web scraper source adapter.
+
+Deep search strategy:
+- Iterates over all 27 Brazilian states (UFs)
+- Searches each state across all event categories
+- Parses event cards from listing pages
+"""
 
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
 import httpx
@@ -19,27 +26,47 @@ from app.sources.base_source import BaseEventSource
 
 logger = logging.getLogger(__name__)
 
-SYMPLA_URLS = [
-    {
-        "url": "https://www.sympla.com.br/eventos/tecnologia-inovacao",
-        "name": "sympla_tech",
-        "category": EventCategory.TECHNOLOGY,
-    },
-    {
-        "url": "https://www.sympla.com.br/eventos/negocios-empreendedorismo",
-        "name": "sympla_business",
-        "category": EventCategory.BUSINESS,
-    },
-    {
-        "url": "https://www.sympla.com.br/eventos/saude-bem-estar",
-        "name": "sympla_health",
-        "category": EventCategory.MEDICAL,
-    },
+BRAZILIAN_STATES = [
+    ("ac", "Acre"), ("al", "Alagoas"), ("ap", "Amapá"), ("am", "Amazonas"),
+    ("ba", "Bahia"), ("ce", "Ceará"), ("df", "Distrito Federal"),
+    ("es", "Espírito Santo"), ("go", "Goiás"), ("ma", "Maranhão"),
+    ("mt", "Mato Grosso"), ("ms", "Mato Grosso do Sul"),
+    ("mg", "Minas Gerais"), ("pa", "Pará"), ("pb", "Paraíba"),
+    ("pr", "Paraná"), ("pe", "Pernambuco"), ("pi", "Piauí"),
+    ("rj", "Rio de Janeiro"), ("rn", "Rio Grande do Norte"),
+    ("rs", "Rio Grande do Sul"), ("ro", "Rondônia"), ("rr", "Roraima"),
+    ("sc", "Santa Catarina"), ("sp", "São Paulo"), ("se", "Sergipe"),
+    ("to", "Tocantins"),
+]
+
+SYMPLA_CATEGORIES = [
+    ("tecnologia-inovacao", EventCategory.TECHNOLOGY),
+    ("negocios-empreendedorismo", EventCategory.BUSINESS),
+    ("saude-bem-estar", EventCategory.MEDICAL),
+    ("gastronomia-bebidas", EventCategory.BUSINESS),
+    ("congressos-seminarios", EventCategory.TECHNOLOGY),
 ]
 
 
+def _build_sympla_urls() -> list[dict]:
+    urls = []
+    for uf_code, state_name in BRAZILIAN_STATES:
+        for cat_slug, category in SYMPLA_CATEGORIES:
+            urls.append({
+                "url": f"https://www.sympla.com.br/eventos/{cat_slug}-{uf_code}",
+                "name": f"sympla_{uf_code}_{cat_slug}",
+                "category": category,
+                "state": state_name,
+                "uf": uf_code.upper(),
+            })
+    return urls
+
+
+SYMPLA_URLS = _build_sympla_urls()
+
+
 class SymplaScraperSource(BaseEventSource):
-    """Scrapes event listings from Sympla."""
+    """Scrapes event listings from Sympla across all Brazilian states."""
 
     def __init__(self) -> None:
         self._client = httpx.Client(
@@ -59,17 +86,30 @@ class SymplaScraperSource(BaseEventSource):
     def fetch_events(self) -> list[EventCreate]:
         all_events: list[EventCreate] = []
 
-        for source in SYMPLA_URLS:
+        def fetch_single(source: dict) -> list[EventCreate]:
             try:
                 response = self._client.get(source["url"])
                 response.raise_for_status()
-                events = self._parse_page(response.text, source)
-                all_events.extend(events)
-                logger.info("Sympla %s: %d events", source["name"], len(events))
+                return self._parse_page(response.text, source)
             except Exception as exc:
-                logger.warning("Sympla %s failed: %s", source["name"], exc)
+                logger.debug("Sympla %s failed: %s", source["name"], exc)
+                return []
 
-        logger.info("Sympla: fetched %d events total", len(all_events))
+        with ThreadPoolExecutor(max_workers=settings.max_concurrent_fetches) as executor:
+            futures = {
+                executor.submit(fetch_single, src): src for src in SYMPLA_URLS
+            }
+            for future in as_completed(futures):
+                src = futures[future]
+                try:
+                    events = future.result()
+                    if events:
+                        all_events.extend(events)
+                        logger.info("Sympla %s: %d events", src["name"], len(events))
+                except Exception as exc:
+                    logger.debug("Sympla %s error: %s", src["name"], exc)
+
+        logger.info("Sympla: fetched %d events from %d URLs", len(all_events), len(SYMPLA_URLS))
         return all_events
 
     def _parse_page(self, html: str, source: dict) -> list[EventCreate]:
@@ -110,11 +150,9 @@ class SymplaScraperSource(BaseEventSource):
                 link = f"https://www.sympla.com.br{link}"
 
             city = ""
-            state = ""
             if location_text:
                 parts = [p.strip() for p in location_text.split(",")]
                 city = parts[0] if parts else ""
-                state = parts[1] if len(parts) > 1 else ""
 
             return EventCreate(
                 name=name,
@@ -129,7 +167,7 @@ class SymplaScraperSource(BaseEventSource):
                 end_date=end_date or start_date,
                 location=LocationModel(
                     city=city,
-                    state_province=state,
+                    state_province=source.get("state", ""),
                     country="Brazil",
                     continent="South America",
                 ),
