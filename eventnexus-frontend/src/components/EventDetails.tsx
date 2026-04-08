@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Event } from '../types';
-import { X, Calendar, MapPin, Users, Building2, Globe, ShieldCheck, Clock, Info, Zap } from 'lucide-react';
+import { X, Calendar, MapPin, Users, Building2, Globe, ShieldCheck, Clock, Info, Zap, Plane, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { categoryLabels, formatLabels, statusLabels, roleLabels, t } from '../lib/labels';
+import { fetchFlightUrl } from '../api';
 
 interface EventDetailsProps {
   event: Event | null;
@@ -38,6 +40,24 @@ function ScoreMeter({ score }: { score: number }) {
 }
 
 export function EventDetails({ event, onClose }: EventDetailsProps) {
+  const [flightUrl, setFlightUrl] = useState<string | null>(null);
+  const [flightLoading, setFlightLoading] = useState(false);
+  const [flightError, setFlightError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!event) return;
+    setFlightUrl(null);
+    setFlightError(null);
+    setFlightLoading(true);
+    fetchFlightUrl(event.id)
+      .then(res => {
+        setFlightUrl(res.url);
+        setFlightError(res.error);
+      })
+      .catch(() => setFlightError('Serviço indisponível'))
+      .finally(() => setFlightLoading(false));
+  }, [event?.id]);
+
   if (!event) return null;
 
   return (
@@ -192,6 +212,28 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
                   >
                     Site Oficial <Globe className="w-4 h-4" />
                   </a>
+
+                  {/* Botão Comprar Passagem */}
+                  {flightLoading ? (
+                    <div className="btn-pill w-full mt-3 bg-brand-navy/5 text-brand-navy/40 text-[14px] cursor-wait">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Buscando voos...
+                    </div>
+                  ) : flightUrl ? (
+                    <a
+                      href={flightUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-pill w-full mt-3 bg-brand-navy text-white hover:bg-brand-navy/90 hover:shadow-lg hover:shadow-brand-navy/20 text-[14px] active:scale-[0.98] transition-all"
+                    >
+                      <Plane className="w-4 h-4" />
+                      Comprar Passagem
+                    </a>
+                  ) : flightError ? (
+                    <div className="mt-3 text-center text-[11px] text-text-body/40">
+                      {flightError}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="p-5 bg-bg-light rounded-2xl border border-border-gray/50">

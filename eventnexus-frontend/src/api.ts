@@ -33,6 +33,13 @@ export async function triggerSync(): Promise<SyncResponse> {
   return response.json();
 }
 
+export async function fetchFlightUrl(eventId: string, origin: string = 'belo horizonte'): Promise<{ url: string | null; error: string | null }> {
+  const params = new URLSearchParams({ origin });
+  const response = await fetch(`${API_URL}/api/events/${eventId}/flight-url?${params}`);
+  if (!response.ok) throw new Error('Falha ao gerar URL de voo');
+  return response.json();
+}
+
 export async function checkHealth(): Promise<{ status: string; database: string }> {
   const response = await fetch(`${API_URL}/api/health`);
   if (!response.ok) throw new Error('API indisponível');

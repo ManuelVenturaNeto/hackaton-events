@@ -67,6 +67,27 @@ def get_event(event_id: str) -> EventResponse:
     return event
 
 
+@router.get("/{event_id}/flight-url")
+def get_flight_url(
+    event_id: str,
+    origin: str = Query("belo horizonte", description="Cidade de origem"),
+) -> dict:
+    """Generate Onfly flight booking URL for an event."""
+    repo = _get_repo()
+    event = repo.get_event_by_id(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    from app.services.flight_service import generate_flight_url_for_event
+    result = generate_flight_url_for_event(
+        event_city=event.location.city,
+        event_start_date=event.startDate,
+        event_end_date=event.endDate,
+        origin_city=origin,
+    )
+    return result
+
+
 @router.post("/sync", response_model=SyncStartResponse)
 def sync_events(background_tasks: BackgroundTasks) -> SyncStartResponse:
     """Trigger event synchronization in background."""
