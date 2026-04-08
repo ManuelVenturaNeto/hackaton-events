@@ -23,7 +23,7 @@ TEST_DB_URL = os.environ.get(
 )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def create_test_db():
     """Create the test database if it doesn't exist."""
     base_url = TEST_DB_URL.rsplit("/", 1)[0] + "/postgres"
