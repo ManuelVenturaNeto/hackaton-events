@@ -1,5 +1,5 @@
 import { Event } from '../types';
-import { Calendar, MapPin, Users, Building2, ExternalLink, ArrowRight, Star } from 'lucide-react';
+import { Calendar, MapPin, Users, Building2, ExternalLink, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
@@ -10,98 +10,125 @@ interface EventCardProps {
   onClick: (event: Event) => void;
 }
 
+function ScoreRing({ score }: { score: number }) {
+  const radius = 18;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? '#1aad6f' : score >= 40 ? '#0c93f5' : '#3a4f66';
+
+  return (
+    <div className="score-ring w-12 h-12">
+      <svg width="48" height="48" viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r={radius} fill="none" stroke="#e1e8ed" strokeWidth="3" />
+        <circle
+          cx="24" cy="24" r={radius} fill="none"
+          stroke={color} strokeWidth="3" strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          className="transition-all duration-700"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-brand-navy">
+        {score}
+      </span>
+    </div>
+  );
+}
+
+const categoryColors: Record<string, string> = {
+  'Technology': 'bg-brand-bright/10 text-brand-bright',
+  'Banking / Financial': 'bg-emerald-50 text-emerald-600',
+  'Agribusiness / Agriculture': 'bg-amber-50 text-amber-600',
+  'Medical / Healthcare': 'bg-rose-50 text-rose-600',
+  'Business / Entrepreneurship': 'bg-violet-50 text-violet-600',
+};
+
 export function EventCard({ event, onClick }: EventCardProps) {
   const isCanceled = event.status === 'canceled';
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.3 }}
       className={cn(
         'card-glass overflow-hidden flex flex-col h-full group cursor-pointer',
-        isCanceled && 'opacity-75 grayscale'
+        isCanceled && 'opacity-60 grayscale'
       )}
       onClick={() => onClick(event)}
     >
+      {/* Top accent line */}
+      <div className="h-[3px] bg-gradient-to-r from-brand-bright via-brand-cta to-brand-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex justify-between items-start mb-3">
           <span className={cn(
-            'text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full',
-            event.category === 'Technology' ? 'bg-brand-bright/10 text-brand-bright' : 'bg-brand-navy/10 text-brand-navy'
+            'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full',
+            categoryColors[event.category] || 'bg-brand-navy/8 text-brand-navy'
           )}>
             {event.category}
           </span>
-          <div className="flex gap-2">
-            {event.status !== 'upcoming' && (
-              <span className={cn(
-                'text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full',
-                isCanceled ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
-              )}>
-                {event.status}
-              </span>
-            )}
-            <span className="bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full flex items-center gap-1">
-              <Star className="w-3 h-3 fill-current" />
-              {event.networkingRelevanceScore}
-            </span>
-          </div>
+          <ScoreRing score={event.networkingRelevanceScore} />
         </div>
 
-        <h3 className="text-lg font-bold text-brand-navy mb-2 group-hover:text-brand-cta transition-colors">
+        <h3 className="text-[15px] font-bold text-brand-navy mb-3 leading-snug group-hover:text-brand-cta transition-colors duration-200 line-clamp-2">
           {event.name}
         </h3>
 
-        <div className="space-y-2 mb-4 flex-1">
-          <div className="flex items-center gap-2 text-sm text-text-body">
-            <Calendar className="w-4 h-4 text-brand-bright" />
+        <div className="space-y-1.5 mb-4 flex-1">
+          <div className="flex items-center gap-2 text-[13px] text-text-body">
+            <Calendar className="w-3.5 h-3.5 text-brand-bright/70 shrink-0" />
             <span>
               {event.startDate ? format(new Date(event.startDate), "d 'de' MMM, yyyy", { locale: ptBR }) : 'Data a definir'}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-text-body">
-            <MapPin className="w-4 h-4 text-brand-bright" />
-            <span className="truncate">{event.location.city}, {event.location.country}</span>
+          <div className="flex items-center gap-2 text-[13px] text-text-body">
+            <MapPin className="w-3.5 h-3.5 text-brand-bright/70 shrink-0" />
+            <span className="truncate">{event.location.city}{event.location.country ? `, ${event.location.country}` : ''}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-text-body">
-            <Building2 className="w-4 h-4 text-brand-bright" />
+          <div className="flex items-center gap-2 text-[13px] text-text-body">
+            <Building2 className="w-3.5 h-3.5 text-brand-bright/70 shrink-0" />
             <span className="truncate">{event.organizer}</span>
           </div>
           {event.expectedAudienceSize > 0 && (
-            <div className="flex items-center gap-2 text-sm text-text-body">
-              <Users className="w-4 h-4 text-brand-bright" />
+            <div className="flex items-center gap-2 text-[13px] text-text-body">
+              <Users className="w-3.5 h-3.5 text-brand-bright/70 shrink-0" />
               <span>{event.expectedAudienceSize.toLocaleString('pt-BR')}+ participantes</span>
             </div>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-1 mb-4">
-          {event.companiesInvolved.slice(0, 3).map((company, i) => (
-            <span key={i} className="text-[10px] bg-bg-light px-2 py-0.5 rounded border border-border-gray">
-              {company.name}
-            </span>
-          ))}
-          {event.companiesInvolved.length > 3 && (
-            <span className="text-[10px] text-brand-bright font-medium">
-              +{event.companiesInvolved.length - 3} mais
-            </span>
-          )}
-        </div>
+        {event.companiesInvolved.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-4">
+            {event.companiesInvolved.slice(0, 3).map((company, i) => (
+              <span key={i} className="text-[10px] bg-bg-light/80 px-2 py-0.5 rounded-md border border-border-gray/50 text-text-body/80">
+                {company.name}
+              </span>
+            ))}
+            {event.companiesInvolved.length > 3 && (
+              <span className="text-[10px] text-brand-bright font-semibold px-1">
+                +{event.companiesInvolved.length - 3}
+              </span>
+            )}
+          </div>
+        )}
 
-        <div className="pt-4 border-t border-border-gray flex items-center justify-between mt-auto">
-          <span className="text-xs font-medium text-brand-bright flex items-center gap-1">
+        <div className="pt-3 border-t border-border-gray/50 flex items-center justify-between mt-auto">
+          <span className="text-xs font-medium text-brand-bright flex items-center gap-1 group-hover:gap-2 transition-all duration-200">
             Ver Detalhes <ArrowRight className="w-3 h-3" />
           </span>
-          <a
-            href={event.officialWebsiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="p-2 hover:bg-bg-light rounded-full transition-colors text-text-body hover:text-brand-cta"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          {event.officialWebsiteUrl && (
+            <a
+              href={event.officialWebsiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="p-1.5 hover:bg-bg-light rounded-full transition-colors text-text-body/50 hover:text-brand-cta"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
         </div>
       </div>
     </motion.div>
