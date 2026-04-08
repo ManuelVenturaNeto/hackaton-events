@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Event } from '../types';
-import { X, Calendar, MapPin, Users, Building2, Globe, ShieldCheck, Clock, Info, Zap, Plane, Loader2 } from 'lucide-react';
+import { X, Calendar, MapPin, Users, Building2, Globe, ShieldCheck, Clock, Info, Zap, Plane, Hotel, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { categoryLabels, formatLabels, statusLabels, roleLabels, t } from '../lib/labels';
-import { fetchFlightUrl } from '../api';
+import { fetchFlightUrl, fetchHotelUrl } from '../api';
 
 interface EventDetailsProps {
   event: Event | null;
@@ -43,6 +43,9 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
   const [flightUrl, setFlightUrl] = useState<string | null>(null);
   const [flightLoading, setFlightLoading] = useState(false);
   const [flightError, setFlightError] = useState<string | null>(null);
+  const [hotelUrl, setHotelUrl] = useState<string | null>(null);
+  const [hotelLoading, setHotelLoading] = useState(false);
+  const [hotelError, setHotelError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!event) return;
@@ -56,6 +59,17 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
       })
       .catch(() => setFlightError('Serviço indisponível'))
       .finally(() => setFlightLoading(false));
+
+    setHotelUrl(null);
+    setHotelError(null);
+    setHotelLoading(true);
+    fetchHotelUrl(event.id)
+      .then(res => {
+        setHotelUrl(res.url);
+        setHotelError(res.error);
+      })
+      .catch(() => setHotelError('Serviço indisponível'))
+      .finally(() => setHotelLoading(false));
   }, [event?.id]);
 
   if (!event) return null;
@@ -224,7 +238,7 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
                       href={flightUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-pill w-full mt-3 bg-brand-navy text-white hover:bg-brand-navy/90 hover:shadow-lg hover:shadow-brand-navy/20 text-[14px] active:scale-[0.98] transition-all"
+                      className="btn-pill btn-primary w-full mt-3 text-[14px]"
                     >
                       <Plane className="w-4 h-4" />
                       Comprar Passagem
@@ -232,6 +246,28 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
                   ) : flightError ? (
                     <div className="mt-3 text-center text-[11px] text-text-body/40">
                       {flightError}
+                    </div>
+                  ) : null}
+
+                  {/* Botão Reservar Hotel */}
+                  {hotelLoading ? (
+                    <div className="btn-pill w-full mt-3 bg-brand-navy/5 text-brand-navy/40 text-[14px] cursor-wait">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Buscando hotéis...
+                    </div>
+                  ) : hotelUrl ? (
+                    <a
+                      href={hotelUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-pill btn-primary w-full mt-3 text-[14px]"
+                    >
+                      <Hotel className="w-4 h-4" />
+                      Reservar Hotel
+                    </a>
+                  ) : hotelError ? (
+                    <div className="mt-3 text-center text-[11px] text-text-body/40">
+                      {hotelError}
                     </div>
                   ) : null}
                 </div>

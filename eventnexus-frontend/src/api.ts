@@ -40,6 +40,12 @@ export async function fetchFlightUrl(eventId: string, origin: string = 'belo hor
   return response.json();
 }
 
+export async function fetchHotelUrl(eventId: string): Promise<{ url: string | null; error: string | null }> {
+  const response = await fetch(`${API_URL}/api/events/${eventId}/hotel-url`);
+  if (!response.ok) throw new Error('Falha ao gerar URL de hotel');
+  return response.json();
+}
+
 export async function checkHealth(): Promise<{ status: string; database: string }> {
   const response = await fetch(`${API_URL}/api/health`);
   if (!response.ok) throw new Error('API indisponível');

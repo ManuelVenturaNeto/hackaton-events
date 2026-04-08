@@ -163,21 +163,8 @@ class Traveller:
         }
 
 
-# Default demo traveller
-DEFAULT_TRAVELLER = Traveller(
-    id="901125a4-c367-4079-9248-3dd8d72663bc",
-    user_id="521204",
-    organization_id="3571",
-    first_name="Manuel Ventura",
-    last_name="Oliveira Neto",
-    email="manuel.ventura+99@onfly.com.br",
-    phone_number="31983587160",
-    birthday="1999-03-04",
-    passport="FS076719",
-    rg="MG19717132",
-    cpf="02138291693",
-    created_at="2025-02-14",
-)
+# No default traveller — the Onfly app will prompt the user to select one
+DEFAULT_TRAVELLER = None
 
 
 def _to_js_date(date_str: str) -> str:
@@ -258,9 +245,6 @@ def build_flight_url(
     traveller: Traveller | None = None,
 ) -> str:
     """Build Onfly booking URL."""
-    if traveller is None:
-        traveller = DEFAULT_TRAVELLER
-
     params = {
         "type": "flights",
         "origin": json.dumps(origin.to_url_dict()),
@@ -268,8 +252,9 @@ def build_flight_url(
         "outboundDate": _to_js_date(outbound_date),
         "inboundDate": _to_js_date(inbound_date),
         "passengers": json.dumps({"label": "1", "value": 1}),
-        "selectedTravellers": json.dumps([traveller.to_url_dict()]),
     }
+    if traveller:
+        params["selectedTravellers"] = json.dumps([traveller.to_url_dict()])
 
     return f"{BASE_URL}?{urlencode(params)}"
 
