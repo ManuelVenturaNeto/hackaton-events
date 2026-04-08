@@ -32,8 +32,8 @@ export function HomePage() {
     const result: LocationSuggestion[] = [];
     for (const event of allEvents) {
       const candidates: LocationSuggestion[] = [
-        { value: event.location.city, type: 'Cidade', filterKey: 'city' },
-        { value: event.location.country, type: 'País', filterKey: 'country' },
+        { value: event.location.city, type: 'Cidade', filterKey: 'city', country: event.location.country },
+        { value: event.location.country, type: 'País', filterKey: 'country', country: event.location.country },
       ];
       for (const c of candidates) {
         const key = `${c.type}:${c.value.toLowerCase()}`;

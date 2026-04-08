@@ -65,6 +65,13 @@ export type SortOption =
   | 'most-companies'
   | 'recently-updated';
 
+export interface LocationSuggestion {
+  value: string;
+  type: string;
+  filterKey: 'city' | 'country';
+  country?: string;
+}
+
 export interface SyncResponse {
   status: string;
   runId: string;

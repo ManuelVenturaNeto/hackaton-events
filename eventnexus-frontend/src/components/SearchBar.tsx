@@ -4,6 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { motion } from 'motion/react';
 import { Event, LocationSuggestion } from '../types';
 import { AutocompleteInput } from './AutocompleteInput';
+import { countryFlag } from '../lib/flags';
 
 interface SearchBarProps {
   query: string;
@@ -76,9 +77,15 @@ export function SearchBar({
             placeholder="Localização"
             icon={<MapPin className="w-4 h-4 text-brand-bright/60 shrink-0" />}
             renderSuggestion={(loc, isActive) => (
-              <div className={`px-4 py-3 cursor-pointer flex items-center justify-between ${isActive ? 'bg-bg-light' : 'hover:bg-bg-light'}`}>
-                <span className="text-sm font-medium text-brand-navy">{loc.value}</span>
-                <span className="text-xs text-text-body bg-bg-light border border-border-gray px-2 py-0.5 rounded-full ml-2">
+              <div className={`px-4 py-3 cursor-pointer flex items-center gap-3 ${isActive ? 'bg-bg-light' : 'hover:bg-bg-light'}`}>
+                <span className="text-lg leading-none">{countryFlag(loc.country || loc.value)}</span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-brand-navy">{loc.value}</span>
+                  {loc.filterKey === 'city' && loc.country && (
+                    <span className="text-xs text-text-body/60 ml-1.5">{loc.country}</span>
+                  )}
+                </div>
+                <span className="text-[10px] text-text-body/50 bg-bg-light border border-border-gray/60 px-2 py-0.5 rounded-full shrink-0">
                   {loc.type}
                 </span>
               </div>
