@@ -67,10 +67,12 @@ export function HomePage() {
             <span className="inline-block bg-brand-bright/20 text-brand-bright px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
               Mapeador de Eventos Corporativos
             </span>
-            <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight tracking-tight">
-              Encontre seu próximo <br />
-              <span className="text-brand-bright">evento estratégico</span>
+            <h1 className="text-5xl md:text-7xl font-bold mb-4 leading-tight tracking-tight">
+              <span className="text-brand-bright">OnEvents</span>
             </h1>
+            <p className="text-white/40 text-sm font-medium uppercase tracking-widest mb-8">
+              powered by <span className="text-white/60">Onfly</span>
+            </p>
             <p className="text-white/60 text-lg md:text-xl max-w-2xl mx-auto mb-12">
               Agregamos os eventos mais relevantes de tecnologia e negócios.
               Priorize o potencial de networking para sua viagem corporativa.
