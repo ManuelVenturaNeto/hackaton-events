@@ -91,7 +91,7 @@ export function HomePage() {
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 flex gap-8">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:block w-72 shrink-0">
-          <div className="sticky top-8 card-glass overflow-hidden">
+          <div className="sticky top-8 card-glass overflow-hidden max-h-[calc(100vh-4rem)]  overflow-y-auto">
             <FilterSidebar filters={filters} setFilters={setFilters} />
           </div>
         </aside>
