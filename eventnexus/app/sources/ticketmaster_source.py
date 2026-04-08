@@ -1,4 +1,11 @@
-"""Ticketmaster Discovery API source adapter."""
+"""Ticketmaster Discovery API source adapter.
+
+Deep search strategy:
+- Iterates over country codes across Americas, Europe, Asia, Oceania
+- Searches each country with multiple keywords
+- Paginates up to 5 pages per keyword+country (max 200 events per combo)
+- 365-day search window
+"""
 
 import logging
 from datetime import datetime, timedelta
@@ -36,11 +43,30 @@ SEARCH_KEYWORDS = [
     "forum",
     "tech",
     "business",
+    "innovation",
+    "fintech",
+    "healthcare",
 ]
+
+# Ticketmaster country codes
+COUNTRY_CODES_AMERICAS = [
+    "BR", "US", "CA", "MX", "AR", "CL", "CO", "PE",
+]
+COUNTRY_CODES_EUROPE = [
+    "GB", "DE", "FR", "ES", "PT", "IT", "NL", "CH", "AT", "BE",
+    "SE", "NO", "DK", "FI", "IE", "PL", "CZ",
+]
+COUNTRY_CODES_ASIA_OCEANIA = [
+    "JP", "SG", "AU", "NZ", "KR", "IN", "AE",
+]
+
+ALL_COUNTRY_CODES = COUNTRY_CODES_AMERICAS + COUNTRY_CODES_EUROPE + COUNTRY_CODES_ASIA_OCEANIA
+
+MAX_PAGES = 5
 
 
 class TicketmasterSource(BaseEventSource):
-    """Fetches events from the Ticketmaster Discovery API."""
+    """Fetches events from the Ticketmaster Discovery API with deep search."""
 
     def __init__(self) -> None:
         self._client = httpx.Client(
@@ -59,40 +85,57 @@ class TicketmasterSource(BaseEventSource):
 
         all_events: list[EventCreate] = []
         now = datetime.utcnow()
-        end = now + timedelta(days=180)
+        end = now + timedelta(days=settings.search_days_ahead)
 
-        for keyword in SEARCH_KEYWORDS:
-            try:
-                events = self._search(keyword, now, end)
-                all_events.extend(events)
-            except Exception as exc:
-                logger.warning("Ticketmaster search '%s' failed: %s", keyword, exc)
+        for country_code in ALL_COUNTRY_CODES:
+            for keyword in SEARCH_KEYWORDS:
+                try:
+                    events = self._search_paginated(keyword, country_code, now, end)
+                    all_events.extend(events)
+                except Exception as exc:
+                    logger.warning(
+                        "Ticketmaster '%s' in %s failed: %s", keyword, country_code, exc
+                    )
 
         logger.info("Ticketmaster: fetched %d events total", len(all_events))
         return all_events
 
-    def _search(self, keyword: str, start: datetime, end: datetime) -> list[EventCreate]:
-        params = {
-            "apikey": settings.ticketmaster_api_key,
-            "keyword": keyword,
-            "startDateTime": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "endDateTime": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "size": 100,
-            "sort": "date,asc",
-        }
+    def _search_paginated(
+        self, keyword: str, country_code: str, start: datetime, end: datetime
+    ) -> list[EventCreate]:
+        results: list[EventCreate] = []
 
-        response = self._client.get(BASE_URL, params=params)
-        response.raise_for_status()
-        data = response.json()
+        for page in range(MAX_PAGES):
+            params = {
+                "apikey": settings.ticketmaster_api_key,
+                "keyword": keyword,
+                "countryCode": country_code,
+                "startDateTime": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "endDateTime": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "size": 200,
+                "page": page,
+                "sort": "date,asc",
+            }
 
-        embedded = data.get("_embedded", {})
-        raw_events = embedded.get("events", [])
+            response = self._client.get(BASE_URL, params=params)
+            response.raise_for_status()
+            data = response.json()
 
-        results = []
-        for raw in raw_events:
-            parsed = self._parse_event(raw)
-            if parsed:
-                results.append(parsed)
+            embedded = data.get("_embedded", {})
+            raw_events = embedded.get("events", [])
+
+            if not raw_events:
+                break
+
+            for raw in raw_events:
+                parsed = self._parse_event(raw)
+                if parsed:
+                    results.append(parsed)
+
+            page_info = data.get("page", {})
+            total_pages = page_info.get("totalPages", 0)
+            if page + 1 >= total_pages:
+                break
 
         return results
 
@@ -122,8 +165,16 @@ class TicketmasterSource(BaseEventSource):
                 lng = float(loc_data.get("longitude", 0)) or None
 
             classifications = raw.get("classifications", [{}])
-            segment = (classifications[0].get("segment", {}).get("name", "") if classifications else "").lower()
-            genre = (classifications[0].get("genre", {}).get("name", "") if classifications else "").lower()
+            segment = (
+                classifications[0].get("segment", {}).get("name", "")
+                if classifications
+                else ""
+            ).lower()
+            genre = (
+                classifications[0].get("genre", {}).get("name", "")
+                if classifications
+                else ""
+            ).lower()
             category = EventCategory.TECHNOLOGY
             for key, cat in CLASSIFICATION_MAP.items():
                 if key in segment or key in genre:
