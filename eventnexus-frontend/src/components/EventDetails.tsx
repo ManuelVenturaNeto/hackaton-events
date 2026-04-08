@@ -1,5 +1,5 @@
 import { Event } from '../types';
-import { X, Calendar, MapPin, Users, Building2, Globe, ShieldCheck, Clock, Info } from 'lucide-react';
+import { X, Calendar, MapPin, Users, Building2, Globe, ShieldCheck, Clock, Info, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -7,6 +7,33 @@ import { ptBR } from 'date-fns/locale';
 interface EventDetailsProps {
   event: Event | null;
   onClose: () => void;
+}
+
+function ScoreMeter({ score }: { score: number }) {
+  const radius = 44;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? '#1aad6f' : score >= 40 ? '#0c93f5' : '#3a4f66';
+
+  return (
+    <div className="relative inline-flex items-center justify-center w-28 h-28">
+      <svg width="112" height="112" viewBox="0 0 112 112" className="-rotate-90">
+        <circle cx="56" cy="56" r={radius} fill="none" stroke="#e1e8ed" strokeWidth="6" />
+        <motion.circle
+          cx="56" cy="56" r={radius} fill="none"
+          stroke={color} strokeWidth="6" strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-3xl font-extrabold text-brand-navy leading-none">{score}</span>
+        <span className="text-[10px] font-bold text-brand-bright uppercase tracking-wider">/100</span>
+      </div>
+    </div>
+  );
 }
 
 export function EventDetails({ event, onClose }: EventDetailsProps) {
@@ -20,50 +47,55 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-brand-navy/60 backdrop-blur-sm"
+          className="absolute inset-0 bg-brand-navy/70 backdrop-blur-md"
         />
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 24 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+          exit={{ opacity: 0, scale: 0.95, y: 24 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-[0_32px_64px_rgba(25,42,61,0.25)] overflow-hidden flex flex-col"
         >
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 hover:bg-bg-light rounded-full transition-colors z-10"
+            className="absolute top-5 right-5 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-10 backdrop-blur-sm"
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-5 h-5 text-white" />
           </button>
 
           <div className="overflow-y-auto">
-            <div className="p-8 md:p-12 bg-brand-navy text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-bright/20 rounded-full blur-3xl -mr-32 -mt-32" />
+            {/* Header */}
+            <div className="p-8 md:p-12 hero-gradient text-white relative overflow-hidden">
+              <div className="hero-grid absolute inset-0" />
+              <div className="absolute top-0 right-0 w-80 h-80 bg-brand-bright/15 rounded-full blur-[80px] -mr-40 -mt-40" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-primary/10 rounded-full blur-[60px] -ml-24 -mb-24" />
+
               <div className="relative z-10">
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="bg-brand-bright px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                <div className="flex flex-wrap gap-2 mb-5">
+                  <span className="bg-brand-bright/90 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm">
                     {event.category}
                   </span>
-                  <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                  <span className="bg-white/15 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">
                     {event.format}
                   </span>
                   {event.status !== 'upcoming' && (
-                    <span className="bg-amber-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                    <span className="bg-amber-500/90 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
                       {event.status}
                     </span>
                   )}
                 </div>
-                <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight text-white">
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 leading-tight text-white tracking-tight">
                   {event.name}
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 bg-white/10 rounded-2xl">
-                      <Calendar className="w-6 h-6" />
+                    <div className="p-2.5 bg-white/10 rounded-xl border border-white/5">
+                      <Calendar className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-white/60 text-xs uppercase font-bold tracking-wider">Data e Duração</p>
-                      <p className="font-medium">
+                      <p className="text-white/50 text-[10px] uppercase font-bold tracking-wider">Data e Duracão</p>
+                      <p className="font-medium text-sm">
                         {event.startDate && format(new Date(event.startDate), "d 'de' MMMM", { locale: ptBR })}
                         {event.endDate && ` - ${format(new Date(event.endDate), "d 'de' MMMM, yyyy", { locale: ptBR })}`}
                         {event.durationDays > 0 && ` (${event.durationDays} dias)`}
@@ -71,12 +103,12 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="p-3 bg-white/10 rounded-2xl">
-                      <MapPin className="w-6 h-6" />
+                    <div className="p-2.5 bg-white/10 rounded-xl border border-white/5">
+                      <MapPin className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-white/60 text-xs uppercase font-bold tracking-wider">Local</p>
-                      <p className="font-medium">
+                      <p className="text-white/50 text-[10px] uppercase font-bold tracking-wider">Local</p>
+                      <p className="font-medium text-sm">
                         {event.location.venueName || 'Local a definir'}, {event.location.city}
                       </p>
                     </div>
@@ -85,65 +117,68 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
               </div>
             </div>
 
-            <div className="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
-              <div className="lg:col-span-2 space-y-10">
+            {/* Content */}
+            <div className="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="lg:col-span-2 space-y-8">
                 <section>
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Info className="w-5 h-5 text-brand-bright" />
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                    <Info className="w-4 h-4 text-brand-bright" />
                     Sobre o Evento
                   </h3>
-                  <p className="text-text-body leading-relaxed text-lg">
-                    {event.briefDescription || 'Descrição não disponível.'}
+                  <p className="text-text-body leading-relaxed">
+                    {event.briefDescription || 'Descricão não disponível.'}
                   </p>
                 </section>
 
                 {event.companiesInvolved.length > 0 && (
                   <section>
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-brand-bright" />
+                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-brand-bright" />
                       Empresas Envolvidas
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {event.companiesInvolved.map((company, i) => (
-                        <div key={i} className="p-4 bg-bg-light rounded-2xl border border-border-gray">
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="p-3 bg-bg-light rounded-xl border border-border-gray/50 hover:border-brand-bright/30 transition-colors"
+                        >
                           <p className="font-bold text-brand-navy text-sm">{company.name}</p>
-                          <p className="text-[10px] uppercase text-brand-bright font-bold tracking-wider">
-                            {company.role}
-                          </p>
-                        </div>
+                          <p className="text-[10px] uppercase text-brand-bright/80 font-bold tracking-wider">{company.role}</p>
+                        </motion.div>
                       ))}
                     </div>
                   </section>
                 )}
               </div>
 
-              <div className="space-y-6">
-                <div className="p-6 bg-brand-bright/5 rounded-3xl border border-brand-bright/10">
-                  <h4 className="text-brand-bright font-bold uppercase text-xs tracking-widest mb-4">
+              <div className="space-y-5">
+                <div className="p-6 bg-gradient-to-br from-brand-bright/5 to-brand-primary/5 rounded-2xl border border-brand-bright/10">
+                  <h4 className="text-brand-bright font-bold uppercase text-[10px] tracking-widest mb-4 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5" />
                     Potencial de Networking
                   </h4>
-                  <div className="flex items-end gap-2 mb-6">
-                    <span className="text-5xl font-bold text-brand-navy leading-none">
-                      {event.networkingRelevanceScore}
-                    </span>
-                    <span className="text-brand-bright font-bold mb-1">/ 100</span>
+                  <div className="flex justify-center mb-5">
+                    <ScoreMeter score={event.networkingRelevanceScore} />
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 text-sm">
-                      <Users className="w-5 h-5 text-brand-bright" />
-                      <span className="font-medium">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2.5 text-sm">
+                      <Users className="w-4 h-4 text-brand-bright/70" />
+                      <span className="font-medium text-[13px]">
                         {event.expectedAudienceSize > 0
                           ? `${event.expectedAudienceSize.toLocaleString('pt-BR')} participantes`
                           : 'Público estimado'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <ShieldCheck className="w-5 h-5 text-brand-bright" />
-                      <span className="font-medium">Evento oficial verificado</span>
+                    <div className="flex items-center gap-2.5 text-sm">
+                      <ShieldCheck className="w-4 h-4 text-brand-success/70" />
+                      <span className="font-medium text-[13px]">Evento verificado</span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <Clock className="w-5 h-5 text-brand-bright" />
-                      <span className="font-medium">
+                    <div className="flex items-center gap-2.5 text-sm">
+                      <Clock className="w-4 h-4 text-text-body/40" />
+                      <span className="font-medium text-[13px] text-text-body/70">
                         Atualizado em {event.lastUpdated && format(new Date(event.lastUpdated), "d 'de' MMM", { locale: ptBR })}
                       </span>
                     </div>
@@ -152,22 +187,23 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
                     href={event.officialWebsiteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-pill btn-primary w-full mt-8"
+                    className="btn-pill btn-primary w-full mt-6 text-[14px]"
                   >
                     Site Oficial <Globe className="w-4 h-4" />
                   </a>
                 </div>
 
-                <div className="p-6 bg-bg-light rounded-3xl border border-border-gray">
-                  <h4 className="text-brand-navy font-bold uppercase text-xs tracking-widest mb-4">
+                <div className="p-5 bg-bg-light rounded-2xl border border-border-gray/50">
+                  <h4 className="text-brand-navy font-bold uppercase text-[10px] tracking-widest mb-3 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-brand-bright/60" />
                     Detalhes do Local
                   </h4>
-                  <p className="text-sm font-medium text-brand-navy mb-1">{event.location.venueName}</p>
-                  <p className="text-sm text-text-body mb-4">{event.location.fullStreetAddress}</p>
-                  <p className="text-sm text-text-body">
-                    {event.location.city}, {event.location.stateProvince}
+                  <p className="text-sm font-semibold text-brand-navy mb-0.5">{event.location.venueName}</p>
+                  <p className="text-[13px] text-text-body/70">{event.location.fullStreetAddress}</p>
+                  <p className="text-[13px] text-text-body/70">
+                    {event.location.city}{event.location.stateProvince ? `, ${event.location.stateProvince}` : ''}
                   </p>
-                  <p className="text-sm text-text-body">{event.location.country}</p>
+                  <p className="text-[13px] text-text-body/70">{event.location.country}</p>
                 </div>
               </div>
             </div>

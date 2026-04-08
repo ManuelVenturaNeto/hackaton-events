@@ -1,6 +1,7 @@
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { motion } from 'motion/react';
 import { Event, LocationSuggestion } from '../types';
 import { AutocompleteInput } from './AutocompleteInput';
 
@@ -28,11 +29,16 @@ export function SearchBar({
   onSelectLocation,
 }: SearchBarProps) {
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="bg-white rounded-[56px] shadow-lg p-2 flex flex-col md:flex-row items-center gap-2 border border-border-gray">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
+      className="w-full max-w-3xl mx-auto"
+    >
+      <div className="bg-white/95 backdrop-blur-xl rounded-[56px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-1.5 flex flex-col md:flex-row items-center gap-1 border border-white/80 ring-1 ring-black/[0.03]">
 
         {/* Event search autocomplete */}
-        <div className="flex-1 flex items-center px-4 w-full">
+        <div className="flex-1 flex items-center px-5 w-full">
           <AutocompleteInput<Event>
             value={query}
             onChange={setQuery}
@@ -42,7 +48,7 @@ export function SearchBar({
             minChars={2}
             maxSuggestions={6}
             placeholder="Buscar eventos, empresas ou organizadores..."
-            icon={<Search className="w-5 h-5 text-brand-bright" />}
+            icon={<Search className="w-5 h-5 text-brand-bright/60 shrink-0" />}
             renderSuggestion={(event, isActive) => (
               <div className={`px-4 py-3 cursor-pointer ${isActive ? 'bg-bg-light' : 'hover:bg-bg-light'}`}>
                 <p className="font-semibold text-brand-navy text-sm">{event.name}</p>
@@ -55,10 +61,10 @@ export function SearchBar({
           />
         </div>
 
-        <div className="hidden md:block w-px h-8 bg-border-gray" />
+        <div className="hidden md:block w-px h-7 bg-border-gray/60" />
 
         {/* Location autocomplete */}
-        <div className="hidden md:flex items-center px-4 w-64">
+        <div className="hidden md:flex items-center px-4 w-56">
           <AutocompleteInput<LocationSuggestion>
             value={locationQuery}
             onChange={setLocationQuery}
@@ -68,7 +74,7 @@ export function SearchBar({
             minChars={2}
             maxSuggestions={8}
             placeholder="Localização"
-            icon={<MapPin className="w-5 h-5 text-brand-bright" />}
+            icon={<MapPin className="w-4 h-4 text-brand-bright/60 shrink-0" />}
             renderSuggestion={(loc, isActive) => (
               <div className={`px-4 py-3 cursor-pointer flex items-center justify-between ${isActive ? 'bg-bg-light' : 'hover:bg-bg-light'}`}>
                 <span className="text-sm font-medium text-brand-navy">{loc.value}</span>
@@ -82,11 +88,12 @@ export function SearchBar({
 
         <button
           onClick={onSearch}
-          className="btn-pill btn-primary w-full md:w-auto px-8"
+          className="btn-pill btn-primary w-full md:w-auto px-7 py-2.5 text-[14px] shadow-md shadow-brand-cta/25 flex items-center gap-2"
         >
+          <Sparkles className="w-4 h-4" />
           Buscar
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
