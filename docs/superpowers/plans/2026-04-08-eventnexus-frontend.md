@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 19, Vite 6, TypeScript, Tailwind CSS 4, Motion (framer-motion), Lucide React icons, date-fns, clsx + tailwind-merge.
 
-**IMPORTANT RULE:** Each task ends with a git commit to main and push to remote describing what was completed.
+**IMPORTANT RULE:** Each task ends with a git commit to main and push to remote describing what was completed. All commits MUST be tagged with `frontend` (create the tag `frontend` on the first commit if it doesn't exist, then move it forward on each subsequent commit using `git tag -f frontend && git push origin frontend -f`).
 
 **API Base URL:** Configurable via `VITE_API_URL` env var (default: `http://localhost:8000`).
 
@@ -201,7 +201,8 @@ cd /home/robson/code/hackaton/eventnexus-frontend && npm install
 cd /home/robson/code/hackaton
 git add eventnexus-frontend/
 git commit -m "feat(frontend): scaffold React + Vite + Tailwind project"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
@@ -444,7 +445,8 @@ Expected: HTML content with `<div id="root">`.
 cd /home/robson/code/hackaton
 git add eventnexus-frontend/src/ eventnexus-frontend/public/
 git commit -m "feat(frontend): add Onfly theme, types aligned to API, and API client"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
@@ -511,7 +513,8 @@ export function SearchBar({ query, setQuery, onSearch }: SearchBarProps) {
 cd /home/robson/code/hackaton
 git add eventnexus-frontend/src/components/SearchBar.tsx
 git commit -m "feat(frontend): add SearchBar component with Portuguese labels"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
@@ -686,7 +689,8 @@ export function FilterSidebar({ filters, setFilters, onClose }: FilterSidebarPro
 cd /home/robson/code/hackaton
 git add eventnexus-frontend/src/components/FilterSidebar.tsx
 git commit -m "feat(frontend): add FilterSidebar with Portuguese labels and Onfly brand"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
@@ -817,7 +821,8 @@ export function EventCard({ event, onClick }: EventCardProps) {
 cd /home/robson/code/hackaton
 git add eventnexus-frontend/src/components/EventCard.tsx
 git commit -m "feat(frontend): add EventCard component with pt-BR date formatting"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
@@ -1020,7 +1025,8 @@ export function EventDetails({ event, onClose }: EventDetailsProps) {
 cd /home/robson/code/hackaton
 git add eventnexus-frontend/src/components/EventDetails.tsx
 git commit -m "feat(frontend): add EventDetails modal with networking score and pt-BR"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
@@ -1102,7 +1108,8 @@ export function SyncButton() {
 cd /home/robson/code/hackaton
 git add eventnexus-frontend/src/components/SyncButton.tsx
 git commit -m "feat(frontend): add SyncButton component for admin sync trigger"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
@@ -1389,7 +1396,8 @@ Expected: Build success with no errors.
 cd /home/robson/code/hackaton
 git add eventnexus-frontend/src/pages/HomePage.tsx eventnexus-frontend/src/App.tsx
 git commit -m "feat(frontend): add HomePage with event grid, filters, sync button, and pt-BR UI"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
@@ -1422,7 +1430,8 @@ Expected: `EventNexus` printed.
 cd /home/robson/code/hackaton
 git add -A
 git commit -m "feat(frontend): complete EventNexus frontend v2 with Onfly brand identity"
-git push origin main
+git tag -f frontend
+git push origin main && git push origin frontend -f
 ```
 
 ---
