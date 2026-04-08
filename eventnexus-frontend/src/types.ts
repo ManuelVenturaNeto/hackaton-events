@@ -53,9 +53,8 @@ export interface SearchFilters {
   category?: EventCategory;
   country?: string;
   city?: string;
-  status?: EventStatus;
   format?: EventFormat;
-  minAudience?: number;
+  dateRange?: string;
   search?: string;
 }
 

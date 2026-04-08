@@ -8,9 +8,13 @@ export async function fetchEvents(filters: SearchFilters = {}): Promise<Event[]>
   if (filters.category) params.append('category', filters.category);
   if (filters.country) params.append('country', filters.country);
   if (filters.city) params.append('city', filters.city);
-  if (filters.status) params.append('status', filters.status);
   if (filters.format) params.append('format', filters.format);
-  if (filters.minAudience) params.append('minAudienceSize', filters.minAudience.toString());
+  if (filters.dateRange) {
+    const today = new Date().toISOString().slice(0, 10);
+    const end = new Date(Date.now() + Number(filters.dateRange) * 86400000).toISOString().slice(0, 10);
+    params.append('startDateFrom', today);
+    params.append('startDateTo', end);
+  }
 
   const response = await fetch(`${API_URL}/api/events?${params.toString()}`);
   if (!response.ok) throw new Error('Falha ao buscar eventos');

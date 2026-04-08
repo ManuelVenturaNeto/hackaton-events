@@ -1,4 +1,4 @@
-import { SearchFilters, EventCategory, EventFormat, EventStatus } from '../types';
+import { SearchFilters, EventCategory, EventFormat } from '../types';
 import { Filter } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -31,13 +31,13 @@ const formatLabels: Record<EventFormat, string> = {
   'online': 'Online',
 };
 
-const statuses: EventStatus[] = ['upcoming', 'canceled', 'postponed', 'completed'];
-const statusLabels: Record<EventStatus, string> = {
-  'upcoming': 'Próximo',
-  'canceled': 'Cancelado',
-  'postponed': 'Adiado',
-  'completed': 'Concluído',
-};
+const dateRangeOptions = [
+  { label: 'Próximos 7 dias', value: '7' },
+  { label: 'Próximos 30 dias', value: '30' },
+  { label: 'Próximos 90 dias', value: '90' },
+  { label: 'Próximos 6 meses', value: '180' },
+  { label: 'Próximo ano', value: '365' },
+];
 
 export function FilterSidebar({ filters, setFilters, onClose }: FilterSidebarProps) {
   const updateFilter = (key: keyof SearchFilters, value: any) => {
@@ -49,7 +49,7 @@ export function FilterSidebar({ filters, setFilters, onClose }: FilterSidebarPro
   };
 
   return (
-    <div className="w-full h-full bg-white flex flex-col">
+    <div className="w-full bg-white flex flex-col">
       <div className="p-6 border-b border-border-gray flex justify-between items-center">
         <div className="flex items-center gap-2 font-bold text-brand-navy">
           <Filter className="w-5 h-5" />
@@ -60,7 +60,7 @@ export function FilterSidebar({ filters, setFilters, onClose }: FilterSidebarPro
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+      <div className="p-6 space-y-8">
         <section>
           <h4 className="text-sm font-bold text-brand-navy mb-4 uppercase tracking-wider">Categoria</h4>
           <div className="space-y-2">
@@ -104,40 +104,26 @@ export function FilterSidebar({ filters, setFilters, onClose }: FilterSidebarPro
         </section>
 
         <section>
-          <h4 className="text-sm font-bold text-brand-navy mb-4 uppercase tracking-wider">Status</h4>
+          <h4 className="text-sm font-bold text-brand-navy mb-4 uppercase tracking-wider">Data</h4>
           <div className="space-y-2">
-            {statuses.map(status => (
-              <label key={status} className="flex items-center gap-3 cursor-pointer group">
+            {dateRangeOptions.map(opt => (
+              <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
                 <input
-                  type="checkbox"
-                  checked={filters.status === status}
-                  onChange={() => updateFilter('status', status)}
-                  className="w-4 h-4 rounded border-border-gray text-brand-cta focus:ring-brand-cta"
+                  type="radio"
+                  name="dateRange"
+                  checked={filters.dateRange === opt.value}
+                  onChange={() => updateFilter('dateRange', opt.value)}
+                  className="w-4 h-4 border-border-gray text-brand-cta focus:ring-brand-cta"
                 />
                 <span className={cn(
                   'text-sm transition-colors',
-                  filters.status === status ? 'text-brand-cta font-semibold' : 'text-text-body group-hover:text-brand-navy'
+                  filters.dateRange === opt.value ? 'text-brand-cta font-semibold' : 'text-text-body group-hover:text-brand-navy'
                 )}>
-                  {statusLabels[status]}
+                  {opt.label}
                 </span>
               </label>
             ))}
           </div>
-        </section>
-
-        <section>
-          <h4 className="text-sm font-bold text-brand-navy mb-4 uppercase tracking-wider">Público Mínimo</h4>
-          <select
-            value={filters.minAudience || ''}
-            onChange={(e) => updateFilter('minAudience', e.target.value ? Number(e.target.value) : undefined)}
-            className="w-full p-2 rounded-lg border border-border-gray text-sm focus:ring-brand-cta focus:border-brand-cta"
-          >
-            <option value="">Qualquer tamanho</option>
-            <option value="1000">1.000+</option>
-            <option value="5000">5.000+</option>
-            <option value="10000">10.000+</option>
-            <option value="50000">50.000+</option>
-          </select>
         </section>
       </div>
 
