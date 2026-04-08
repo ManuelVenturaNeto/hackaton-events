@@ -23,8 +23,8 @@ SERVICE_YAML = os.path.join(SCRIPT_DIR, "service.yaml")
 def _url_encode_password(db_url: str) -> str:
     """URL-encode the password in a PostgreSQL connection string.
 
+    Skips encoding if the password is already percent-encoded.
     Uses regex because urlparse chokes on special chars like / in passwords.
-    Pattern: scheme://user:password@host:port/dbname?params
     """
     match = re.match(
         r'^(?P<scheme>[^:]+)://(?P<user>[^:]+):(?P<password>.+)@(?P<rest>.+)$',
@@ -32,7 +32,11 @@ def _url_encode_password(db_url: str) -> str:
     )
     if not match:
         return db_url
-    encoded_pw = quote(match.group("password"), safe="")
+    password = match.group("password")
+    # Skip if already percent-encoded (contains %XX patterns)
+    if re.search(r'%[0-9A-Fa-f]{2}', password):
+        return db_url
+    encoded_pw = quote(password, safe="")
     return f"{match.group('scheme')}://{match.group('user')}:{encoded_pw}@{match.group('rest')}"
 
 
