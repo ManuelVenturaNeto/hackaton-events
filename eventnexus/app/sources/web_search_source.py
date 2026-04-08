@@ -78,7 +78,7 @@ class WebSearchSource(BaseEventSource):
                     all_events.extend(events)
                     logger.info("WebSearch %s: %d events", source["name"], len(events))
             except Exception as exc:
-                logger.debug("WebSearch %s failed: %s", source["name"], exc)
+                logger.warning("WebSearch %s failed: %s", source["name"], exc)
 
         logger.info("WebSearch: fetched %d events from %d URLs", len(all_events), len(SEARCH_URLS))
         return all_events

@@ -79,7 +79,7 @@ class SymplaScraperSource(BaseEventSource):
                     all_events.extend(events)
                     logger.info("Sympla %s: %d events", source["name"], len(events))
             except Exception as exc:
-                logger.debug("Sympla %s failed: %s", source["name"], exc)
+                logger.warning("Sympla %s failed: %s", source["name"], exc)
 
         logger.info("Sympla: fetched %d events from %d URLs", len(all_events), len(SYMPLA_URLS))
         return all_events

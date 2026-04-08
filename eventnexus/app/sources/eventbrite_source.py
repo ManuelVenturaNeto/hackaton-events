@@ -66,7 +66,7 @@ class EventbriteSource(BaseEventSource):
                     if events:
                         logger.info("Eventbrite %s/%s: %d events", loc_slug, keyword, len(events))
                 except Exception as exc:
-                    logger.debug("Eventbrite %s/%s failed: %s", loc_slug, keyword, exc)
+                    logger.warning("Eventbrite %s/%s failed: %s", loc_slug, keyword, exc)
 
         logger.info("Eventbrite: fetched %d events total", len(all_events))
         return all_events
@@ -89,7 +89,7 @@ class EventbriteSource(BaseEventSource):
                 if event:
                     events.append(event)
         except Exception as exc:
-            logger.debug("Eventbrite page scrape failed for %s: %s", url, exc)
+            logger.warning("Eventbrite page scrape failed for %s: %s", url, exc)
         finally:
             page.context.close()
 
