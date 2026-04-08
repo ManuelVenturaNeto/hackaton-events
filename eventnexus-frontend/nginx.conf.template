@@ -9,8 +9,7 @@ server {
     }
 
     location /api/ {
-        set $backend "http://localhost:8000";
-        proxy_pass $backend;
+        proxy_pass http://${API_HOST}:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }

@@ -16,6 +16,7 @@ spec:
     spec:
       containerConcurrency: 80
       containers:
+      # Ingress container — frontend nginx (receives external traffic on 8080)
       - image: us-central1-docker.pkg.dev/dw-onfly-dev/hackaton-events/frontend:latest
         ports:
         - containerPort: 8080
@@ -30,9 +31,10 @@ spec:
           tcpSocket:
             port: 8080
           timeoutSeconds: 3
+      # Sidecar — backend API on localhost:8000 (no exposed port, nginx proxies /api/)
       - env:
         - name: PORT
-          value: '8080'
+          value: '8000'
         - name: DATABASE_URL
           value: postgresql://postgres.prvljsmnyxvvgzmvsgzz:Um%2A3z%2F%2AfhsC4nJR@aws-1-sa-east-1.pooler.supabase.com:6543/postgres
         - name: TICKETMASTER_API_KEY
@@ -52,18 +54,9 @@ spec:
         - name: REQUEST_TIMEOUT_SECONDS
           value: '30'
         image: us-central1-docker.pkg.dev/dw-onfly-dev/hackaton-events/fullstack:latest
-        ports:
-        - containerPort: 8080
         resources:
           limits:
             cpu: '1'
             memory: 1Gi
-        startupProbe:
-          failureThreshold: 5
-          initialDelaySeconds: 3
-          periodSeconds: 10
-          tcpSocket:
-            port: 8080
-          timeoutSeconds: 5
       serviceAccountName: 247888593708-compute@developer.gserviceaccount.com
       timeoutSeconds: 300

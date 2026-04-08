@@ -15,8 +15,11 @@ RUN npm run build
 FROM nginx:alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 8080
+
+# API_HOST defaults to localhost (Cloud Run sidecar); override to "api" for Docker Compose
+ENV API_HOST=localhost
 
 CMD ["nginx", "-g", "daemon off;"]
