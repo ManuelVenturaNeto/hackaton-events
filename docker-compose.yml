@@ -36,7 +36,7 @@ services:
       args:
         VITE_API_URL: ""
     ports:
-      - "3000:80"
+      - "3000:8080"
     depends_on:
       - api
 
