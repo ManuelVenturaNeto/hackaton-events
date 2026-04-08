@@ -97,18 +97,17 @@ export function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <header className="hero-gradient text-white relative overflow-hidden pt-16 pb-28 px-6">
-        {/* Grid overlay */}
+      <header className="hero-gradient text-white relative overflow-hidden pt-12 pb-20 sm:pt-16 sm:pb-28 px-4 sm:px-6">
         <div className="hero-grid absolute inset-0" />
 
-        {/* Floating orbs */}
-        <div className="absolute top-16 left-[10%] w-72 h-72 bg-brand-bright/10 rounded-full blur-[100px] float-orb" />
-        <div className="absolute bottom-8 right-[10%] w-96 h-96 bg-brand-primary/8 rounded-full blur-[120px] float-orb-delayed" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-cta/5 rounded-full blur-[150px]" />
+        {/* Floating orbs — hidden on small screens for performance */}
+        <div className="hidden sm:block absolute top-16 left-[10%] w-72 h-72 bg-brand-bright/10 rounded-full blur-[100px] float-orb" />
+        <div className="hidden sm:block absolute bottom-8 right-[10%] w-96 h-96 bg-brand-primary/8 rounded-full blur-[120px] float-orb-delayed" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-brand-cta/5 rounded-full blur-[100px] sm:blur-[150px]" />
 
-        {/* Geometric accents */}
-        <div className="absolute top-20 right-[15%] w-24 h-24 border border-white/[0.06] rounded-2xl rotate-12" />
-        <div className="absolute bottom-24 left-[12%] w-16 h-16 border border-white/[0.04] rounded-xl -rotate-6" />
+        {/* Geometric accents — desktop only */}
+        <div className="hidden md:block absolute top-20 right-[15%] w-24 h-24 border border-white/[0.06] rounded-2xl rotate-12" />
+        <div className="hidden md:block absolute bottom-24 left-[12%] w-16 h-16 border border-white/[0.04] rounded-xl -rotate-6" />
 
         <div className="max-w-7xl mx-auto relative z-10 text-center">
           <motion.div
@@ -120,19 +119,19 @@ export function HomePage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex items-center gap-2 bg-white/[0.08] backdrop-blur-sm border border-white/[0.08] text-brand-bright px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-widest mb-8"
+              className="inline-flex items-center gap-2 bg-white/[0.08] backdrop-blur-sm border border-white/[0.08] text-brand-bright px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-widest mb-6 sm:mb-8"
             >
-              <Plane className="w-3.5 h-3.5" />
+              <Plane className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               Mapeador de Eventos Corporativos
             </motion.div>
 
-            <h1 className="text-6xl md:text-8xl font-extrabold mb-3 leading-none tracking-tighter">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-extrabold mb-2 sm:mb-3 leading-none tracking-tighter">
               <span className="text-gradient">OnEvents</span>
             </h1>
-            <p className="text-white/30 text-xs font-medium uppercase tracking-[0.3em] mb-8">
+            <p className="text-white/30 text-[10px] sm:text-xs font-medium uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-5 sm:mb-8">
               powered by Onfly
             </p>
-            <p className="text-white/50 text-base md:text-lg max-w-xl mx-auto mb-12 leading-relaxed font-light">
+            <p className="text-white/50 text-sm sm:text-base md:text-lg max-w-xl mx-auto mb-8 sm:mb-12 leading-relaxed font-light px-2">
               Agregamos os eventos mais relevantes de tecnologia e negócios.
               Priorize o potencial de networking para sua viagem corporativa.
             </p>
@@ -155,7 +154,7 @@ export function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex justify-center gap-8 mt-10"
+            className="flex justify-center gap-6 sm:gap-8 mt-8 sm:mt-10"
           >
             {[
               { value: '1.500+', label: 'Eventos' },
@@ -163,8 +162,8 @@ export function HomePage() {
               { value: '5', label: 'Fontes' },
             ].map((stat, i) => (
               <div key={i} className="text-center">
-                <p className="text-white/90 text-3xl md:text-4xl font-extrabold">{stat.value}</p>
-                <p className="text-white/40 text-xs uppercase tracking-wider font-medium mt-1">{stat.label}</p>
+                <p className="text-white/90 text-2xl sm:text-3xl md:text-4xl font-extrabold">{stat.value}</p>
+                <p className="text-white/40 text-[10px] sm:text-xs uppercase tracking-wider font-medium mt-0.5 sm:mt-1">{stat.label}</p>
               </div>
             ))}
           </motion.div>
@@ -172,7 +171,7 @@ export function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 flex gap-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 flex gap-6 lg:gap-8">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:block w-64 shrink-0">
           <div className="sticky top-6 card-glass overflow-hidden">
@@ -181,26 +180,26 @@ export function HomePage() {
         </aside>
 
         {/* Event List */}
-        <div className="flex-1">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
             <div>
-              <h2 className="text-xl font-bold text-brand-navy">
+              <h2 className="text-lg sm:text-xl font-bold text-brand-navy">
                 {loading ? 'Buscando eventos...' : `${events.length} eventos encontrados`}
               </h2>
-              <p className="text-sm text-text-body/60">
+              <p className="text-xs sm:text-sm text-text-body/60">
                 Ordenados por relevância de networking
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 flex-wrap">
               <SyncButton />
 
-              <div className="flex items-center gap-2 bg-white border border-border-gray/60 px-3.5 py-2 rounded-full text-sm font-medium text-brand-navy shadow-sm">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-brand-bright/60" />
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-white border border-border-gray/60 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-sm font-medium text-brand-navy shadow-sm">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-brand-bright/60 hidden sm:block" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="bg-transparent outline-none cursor-pointer text-brand-cta text-[13px]"
+                  className="bg-transparent outline-none cursor-pointer text-brand-cta text-[12px] sm:text-[13px]"
                 >
                   <option value="highest-score">Score de Networking</option>
                   <option value="soonest">Data mais próxima</option>
@@ -220,7 +219,7 @@ export function HomePage() {
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-32 text-text-body">
+            <div className="flex flex-col items-center justify-center py-20 sm:py-32 text-text-body">
               <div className="relative">
                 <Loader2 className="w-10 h-10 animate-spin text-brand-cta/30" />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -230,7 +229,7 @@ export function HomePage() {
               <p className="font-medium mt-4 text-sm text-text-body/60">Buscando fontes confiáveis...</p>
             </div>
           ) : error ? (
-            <div className="bg-red-50/80 border border-red-100 p-8 rounded-2xl text-center">
+            <div className="bg-red-50/80 border border-red-100 p-6 sm:p-8 rounded-2xl text-center">
               <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
               <h3 className="text-base font-bold text-red-900 mb-2">Ops! Algo deu errado</h3>
               <p className="text-red-600/80 mb-5 text-sm">{error}</p>
@@ -239,7 +238,7 @@ export function HomePage() {
               </button>
             </div>
           ) : events.length === 0 ? (
-            <div className="bg-white border border-border-gray/50 p-16 rounded-2xl text-center">
+            <div className="bg-white border border-border-gray/50 p-10 sm:p-16 rounded-2xl text-center">
               <div className="w-16 h-16 bg-brand-bright/5 rounded-2xl flex items-center justify-center mx-auto mb-5">
                 <Compass className="w-7 h-7 text-brand-bright/30" />
               </div>
@@ -255,7 +254,7 @@ export function HomePage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
               <AnimatePresence mode="popLayout">
                 {events.map((event, i) => (
                   <motion.div
@@ -298,7 +297,7 @@ export function HomePage() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="absolute right-0 top-0 bottom-0 w-full max-w-xs bg-white shadow-2xl"
+              className="absolute right-0 top-0 bottom-0 w-full max-w-[280px] bg-white shadow-2xl overflow-y-auto"
             >
               <FilterSidebar
                 filters={filters}
