@@ -112,8 +112,8 @@ export function HomePage() {
               { value: '5', label: 'Fontes' },
             ].map((stat, i) => (
               <div key={i} className="text-center">
-                <p className="text-white/90 text-lg font-bold">{stat.value}</p>
-                <p className="text-white/30 text-[10px] uppercase tracking-wider font-medium">{stat.label}</p>
+                <p className="text-white/90 text-3xl md:text-4xl font-extrabold">{stat.value}</p>
+                <p className="text-white/40 text-xs uppercase tracking-wider font-medium mt-1">{stat.label}</p>
               </div>
             ))}
           </motion.div>
