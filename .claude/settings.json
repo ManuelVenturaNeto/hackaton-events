@@ -1,0 +1,10 @@
+{
+  "enabledPlugins": {
+    "skill-creator@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "data-engineering@claude-plugins-official": true,
+    "superpowers@superpowers-dev": true,
+    "code-review@claude-plugins-official": true
+  }
+}
