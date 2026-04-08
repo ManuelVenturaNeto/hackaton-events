@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     eventbrite_api_token: str = ""
     max_concurrent_fetches: int = 10
     request_timeout_seconds: int = 30
+    search_days_ahead: int = 365
     log_level: str = "INFO"
     cors_origins: list[str] = ["*"]
 
